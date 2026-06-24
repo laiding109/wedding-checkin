@@ -6,953 +6,572 @@
 <title>婚禮報到系統</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<!-- QR Code library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-/* ── Design Tokens ───────────────────────────── */
 :root {
-  --cream:   #FAF7F2;
-  --parchment: #F0EBE1;
-  --gold:    #C8A96E;
-  --gold-light: #E8D9BC;
-  --gold-dark:  #9A7A46;
-  --ink:     #2A2118;
-  --ink-mid: #5C4D3C;
-  --ink-lite:#9C8B78;
-  --rose:    #C4726A;
-  --rose-pale:#F5E8E7;
-  --green:   #4A7C6B;
-  --green-pale:#E3F0EB;
-  --white:   #FFFFFF;
-  --shadow:  0 2px 16px rgba(42,33,24,.08);
-  --shadow-lg: 0 8px 32px rgba(42,33,24,.12);
-  --radius:  12px;
-  --radius-sm: 7px;
-  --serif: 'Noto Serif TC', serif;
-  --sans:  'Noto Sans TC', sans-serif;
+  --cream:#FAF7F2; --parchment:#F0EBE1; --gold:#C8A96E; --gold-light:#E8D9BC;
+  --gold-dark:#9A7A46; --ink:#2A2118; --ink-mid:#5C4D3C; --ink-lite:#9C8B78;
+  --rose:#C4726A; --rose-pale:#F5E8E7; --green:#4A7C6B; --green-pale:#E3F0EB;
+  --white:#FFFFFF; --shadow:0 2px 16px rgba(42,33,24,.08);
+  --shadow-lg:0 8px 32px rgba(42,33,24,.12);
+  --radius:12px; --radius-sm:7px;
+  --serif:'Noto Serif TC',serif; --sans:'Noto Sans TC',sans-serif;
 }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--cream);color:var(--ink);min-height:100vh;font-size:14px;line-height:1.6}
+.layout{display:flex;min-height:100vh}
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* Sidebar */
+.sidebar{width:220px;flex-shrink:0;background:var(--ink);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50}
+.sidebar-brand{padding:24px 24px 18px;border-bottom:1px solid rgba(255,255,255,.08)}
+.brand-sub{font-size:10px;letter-spacing:.15em;color:var(--gold);text-transform:uppercase;margin-bottom:4px}
+.brand-name{font-family:var(--serif);font-size:18px;color:var(--white);font-weight:700;line-height:1.3}
+.sidebar-stats{padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;gap:0}
+.sb-stat{flex:1;text-align:center}
+.sb-stat-val{font-family:var(--serif);font-size:21px;font-weight:700;color:var(--gold);display:block;line-height:1}
+.sb-stat-lbl{font-size:10px;color:rgba(255,255,255,.4);margin-top:3px;display:block}
+.sb-divider{width:1px;background:rgba(255,255,255,.08);margin:4px 8px}
+.progress-ring-wrap{padding:14px 24px 16px;border-bottom:1px solid rgba(255,255,255,.06);text-align:center}
+.progress-track{height:5px;background:rgba(255,255,255,.1);border-radius:3px;margin-bottom:7px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold));border-radius:3px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.progress-label{font-size:11px;color:rgba(255,255,255,.4)}
+.progress-label strong{color:var(--gold)}
+.sidebar-nav{padding:10px 0;flex:1;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s;font-size:13px;border-left:3px solid transparent;background:none;border-right:none;border-top:none;border-bottom:none;width:100%;text-align:left}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.7}
+.nav-item:hover{color:rgba(255,255,255,.8);background:rgba(255,255,255,.04)}
+.nav-item.active{color:var(--gold);border-left-color:var(--gold);background:rgba(200,169,110,.08)}
+.nav-item.active svg{opacity:1}
+.sidebar-footer{padding:14px 24px;border-top:1px solid rgba(255,255,255,.06);font-size:10px;color:rgba(255,255,255,.2)}
 
-body {
-  font-family: var(--sans);
-  background: var(--cream);
-  color: var(--ink);
-  min-height: 100vh;
-  font-size: 14px;
-  line-height: 1.6;
-}
+/* Main */
+.main{margin-left:220px;flex:1;min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:var(--white);border-bottom:1px solid var(--parchment);padding:14px 28px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:40}
+.topbar h1{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--ink);flex:1}
+.topbar-sub{font-size:12px;color:var(--ink-lite)}
+.content{padding:24px 28px;flex:1}
+.page{display:none}.page.active{display:block}
 
-/* ── Layout ─────────────────────────────────── */
-.layout {
-  display: flex;
-  min-height: 100vh;
-}
+/* Cards */
+.card{background:var(--white);border-radius:var(--radius);border:1px solid var(--parchment);padding:18px 20px;box-shadow:var(--shadow)}
+.card+.card{margin-top:12px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card-title{font-family:var(--serif);font-size:14px;font-weight:700;color:var(--ink)}
 
-/* ── Sidebar ─────────────────────────────────── */
-.sidebar {
-  width: 220px;
-  flex-shrink: 0;
-  background: var(--ink);
-  display: flex;
-  flex-direction: column;
-  padding: 0;
-  position: fixed;
-  top: 0; left: 0; bottom: 0;
-  z-index: 50;
-}
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:18px}
+.kpi{background:var(--white);border-radius:var(--radius);border:1px solid var(--parchment);padding:16px 14px;box-shadow:var(--shadow);text-align:center}
+.kpi-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:16px}
+.kpi-icon.gold{background:#FDF4E3;color:var(--gold-dark)}
+.kpi-icon.green{background:var(--green-pale);color:var(--green)}
+.kpi-icon.rose{background:var(--rose-pale);color:var(--rose)}
+.kpi-icon.ink{background:var(--parchment);color:var(--ink-mid)}
+.kpi-val{font-family:var(--serif);font-size:26px;font-weight:700;color:var(--ink);line-height:1;margin-bottom:3px}
+.kpi-lbl{font-size:11px;color:var(--ink-lite)}
 
-.sidebar-brand {
-  padding: 28px 24px 24px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
-}
-.sidebar-brand .brand-sub {
-  font-family: var(--sans);
-  font-size: 10px;
-  letter-spacing: .15em;
-  color: var(--gold);
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
-.sidebar-brand .brand-name {
-  font-family: var(--serif);
-  font-size: 18px;
-  color: var(--white);
-  font-weight: 700;
-  line-height: 1.3;
-}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 15px;border-radius:var(--radius-sm);font-size:13px;font-family:var(--sans);cursor:pointer;transition:all .15s;border:none;font-weight:500}
+.btn-gold{background:var(--gold);color:var(--white)}.btn-gold:hover{background:var(--gold-dark)}
+.btn-outline{background:none;border:1px solid var(--parchment);color:var(--ink-mid)}.btn-outline:hover{border-color:var(--gold-light);background:var(--cream)}
+.btn-ghost{background:none;color:var(--ink-lite);padding:4px 7px;border:none;cursor:pointer}.btn-ghost:hover{color:var(--rose)}
+.btn-green{background:var(--green);color:var(--white)}.btn-green:hover{background:#3A6A5A}
+.btn-sm{padding:5px 11px;font-size:12px}
+.checkin-btn{padding:5px 13px;border-radius:var(--radius-sm);font-size:12px;border:1px solid var(--gold-light);background:none;color:var(--gold-dark);cursor:pointer;font-family:var(--sans);font-weight:500;transition:all .15s}
+.checkin-btn:hover{background:var(--gold);color:var(--white);border-color:var(--gold)}
 
-.sidebar-stats {
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(255,255,255,.06);
-  display: flex;
-  gap: 0;
-}
-.sb-stat {
-  flex: 1;
-  text-align: center;
-}
-.sb-stat-val {
-  font-family: var(--serif);
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--gold);
-  display: block;
-  line-height: 1;
-}
-.sb-stat-lbl {
-  font-size: 10px;
-  color: rgba(255,255,255,.45);
-  margin-top: 3px;
-  display: block;
-}
-.sb-divider {
-  width: 1px;
-  background: rgba(255,255,255,.08);
-  margin: 4px 8px;
-}
+/* Search & Filter */
+.search-bar{position:relative;margin-bottom:9px}
+.search-bar svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--ink-lite)}
+.search-bar input{width:100%;padding:8px 12px 8px 32px;border:1px solid var(--parchment);border-radius:var(--radius-sm);font-size:13px;background:var(--cream);color:var(--ink);font-family:var(--sans);transition:border-color .15s}
+.search-bar input:focus{outline:none;border-color:var(--gold);background:var(--white)}
+.filter-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.pill{padding:4px 12px;border-radius:99px;border:1px solid var(--parchment);font-size:12px;cursor:pointer;background:none;color:var(--ink-lite);font-family:var(--sans);transition:all .15s}
+.pill:hover{border-color:var(--gold-light);color:var(--ink-mid)}
+.pill.active{background:var(--ink);color:var(--white);border-color:var(--ink)}
 
-.progress-ring-wrap {
-  padding: 16px 24px 20px;
-  border-bottom: 1px solid rgba(255,255,255,.06);
-  text-align: center;
-}
-.progress-track {
-  height: 5px;
-  background: rgba(255,255,255,.1);
-  border-radius: 3px;
-  margin-bottom: 8px;
-  overflow: hidden;
-}
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--gold-dark), var(--gold));
-  border-radius: 3px;
-  transition: width .5s cubic-bezier(.4,0,.2,1);
-}
-.progress-label {
-  font-size: 11px;
-  color: rgba(255,255,255,.45);
-}
-.progress-label strong { color: var(--gold); }
+/* Guest rows */
+.guest-list{display:flex;flex-direction:column;gap:5px;max-height:420px;overflow-y:auto}
+.guest-row{display:flex;align-items:center;gap:9px;padding:10px 13px;background:var(--white);border:1px solid var(--parchment);border-radius:var(--radius-sm);transition:all .15s}
+.guest-row:hover{border-color:var(--gold-light)}
+.guest-row.checked{background:var(--green-pale);border-color:#A8D4C5}
+.g-avatar{width:32px;height:32px;border-radius:50%;background:var(--parchment);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:13px;font-weight:700;color:var(--ink-mid);flex-shrink:0}
+.guest-row.checked .g-avatar{background:#A8D4C5;color:var(--green)}
+.g-info{flex:1;min-width:0}
+.g-name{font-weight:500;font-size:13px}
+.g-meta{font-size:11px;color:var(--ink-lite);margin-top:1px}
+.g-table{font-size:11px;background:var(--parchment);color:var(--ink-mid);padding:2px 8px;border-radius:99px;font-weight:500}
+.checkin-time{font-size:11px;color:var(--green);font-weight:500}
 
-.sidebar-nav {
-  padding: 12px 0;
-  flex: 1;
-}
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 24px;
-  color: rgba(255,255,255,.5);
-  cursor: pointer;
-  transition: all .15s;
-  font-size: 13px;
-  border-left: 3px solid transparent;
-  background: none;
-  border-right: none; border-top: none; border-bottom: none;
-  width: 100%;
-  text-align: left;
-}
-.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; opacity: .7; }
-.nav-item:hover { color: rgba(255,255,255,.8); background: rgba(255,255,255,.04); }
-.nav-item.active {
-  color: var(--gold);
-  border-left-color: var(--gold);
-  background: rgba(200,169,110,.08);
-}
-.nav-item.active svg { opacity: 1; }
+/* Forms */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-label{font-size:11px;color:var(--ink-lite);font-weight:500;letter-spacing:.02em}
+.form-input{padding:8px 10px;border:1px solid var(--parchment);border-radius:var(--radius-sm);font-size:13px;background:var(--cream);color:var(--ink);font-family:var(--sans);transition:border-color .15s;width:100%}
+.form-input:focus{outline:none;border-color:var(--gold);background:var(--white)}
+select.form-input{cursor:pointer}
+.form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
 
-.sidebar-footer {
-  padding: 16px 24px;
-  border-top: 1px solid rgba(255,255,255,.06);
-  font-size: 11px;
-  color: rgba(255,255,255,.25);
-}
+/* Gift */
+.gift-row{display:flex;align-items:center;gap:9px;padding:9px 13px;border:1px solid var(--parchment);border-radius:var(--radius-sm);background:var(--white);margin-bottom:5px}
+.gift-name{flex:1;font-weight:500;font-size:13px}
+.gift-type{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--parchment);color:var(--ink-mid)}
+.gift-amount{font-weight:700;font-size:14px;color:var(--green);font-family:var(--serif)}
+.gift-note{font-size:11px;color:var(--ink-lite);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-/* ── Main Content ────────────────────────────── */
-.main {
-  margin-left: 220px;
-  flex: 1;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+/* Upload */
+.upload-zone{border:2px dashed var(--gold-light);border-radius:var(--radius);padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--cream)}
+.upload-zone:hover{border-color:var(--gold);background:#FDF7EE}
+.upload-icon{font-size:30px;margin-bottom:9px}
+.upload-title{font-family:var(--serif);font-size:15px;color:var(--ink);margin-bottom:5px}
+.upload-sub{font-size:12px;color:var(--ink-lite);line-height:1.6}
 
-.topbar {
-  background: var(--white);
-  border-bottom: 1px solid var(--parchment);
-  padding: 16px 32px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  position: sticky;
-  top: 0;
-  z-index: 40;
-}
-.topbar h1 {
-  font-family: var(--serif);
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--ink);
-  flex: 1;
-}
-.topbar-sub {
-  font-size: 12px;
-  color: var(--ink-lite);
-}
+/* Info box */
+.info-box{background:#FDF7EE;border:1px solid var(--gold-light);border-radius:var(--radius-sm);padding:11px 13px;font-size:12px;color:var(--ink-mid);line-height:1.7;margin-bottom:13px}
+.info-box strong{color:var(--ink)}
 
-.content {
-  padding: 28px 32px;
-  flex: 1;
-}
+/* Step cards */
+.step-card{background:var(--white);border:1px solid var(--parchment);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);margin-bottom:11px}
+.step-header{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.step-num{width:24px;height:24px;border-radius:50%;background:var(--gold);color:var(--white);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--serif)}
+.step-title{font-weight:500;font-size:14px}
+.step-body{font-size:12px;color:var(--ink-mid);line-height:1.8}
+.code-block{background:var(--ink);color:#A8D4C5;border-radius:var(--radius-sm);padding:11px 13px;font-family:'Courier New',monospace;font-size:11px;margin-top:9px;line-height:1.7;overflow-x:auto}
 
-/* ── Page visibility ─────────────────────────── */
-.page { display: none; }
-.page.active { display: block; }
+/* Export */
+.export-card{background:var(--white);border:1px solid var(--parchment);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.export-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.export-info{flex:1}
+.export-title{font-weight:500;font-size:14px;margin-bottom:2px}
+.export-sub{font-size:12px;color:var(--ink-lite)}
 
-/* ── Cards ───────────────────────────────────── */
-.card {
-  background: var(--white);
-  border-radius: var(--radius);
-  border: 1px solid var(--parchment);
-  padding: 20px;
-  box-shadow: var(--shadow);
-}
-.card + .card { margin-top: 14px; }
+/* QR page */
+.qr-guest-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-top:14px}
+.qr-card{background:var(--white);border:1px solid var(--parchment);border-radius:var(--radius);padding:16px;text-align:center;box-shadow:var(--shadow)}
+.qr-card-name{font-family:var(--serif);font-size:14px;font-weight:700;margin-bottom:4px;color:var(--ink)}
+.qr-card-meta{font-size:11px;color:var(--ink-lite);margin-bottom:10px}
+.qr-box{margin:0 auto;width:120px;height:120px}
 
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-.card-title {
-  font-family: var(--serif);
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--ink);
-}
+/* Chart page */
+.chart-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.donut-wrap{position:relative;width:200px;height:200px;margin:0 auto}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.donut-pct{font-family:var(--serif);font-size:32px;font-weight:700;color:var(--ink);line-height:1}
+.donut-lbl{font-size:11px;color:var(--ink-lite);margin-top:2px}
+.legend-item{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--parchment)}
+.legend-item:last-child{border-bottom:none}
+.legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.legend-label{flex:1;font-size:13px}
+.legend-val{font-family:var(--serif);font-size:15px;font-weight:700}
+.legend-pct{font-size:11px;color:var(--ink-lite);margin-left:4px}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.bar-label{font-size:12px;width:70px;text-align:right;color:var(--ink-mid);flex-shrink:0}
+.bar-track{flex:1;height:10px;background:var(--parchment);border-radius:5px;overflow:hidden}
+.bar-fill{height:100%;border-radius:5px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.bar-val{font-size:12px;font-weight:500;width:40px;color:var(--ink-mid)}
 
-/* ── Dashboard grid ──────────────────────────── */
-.kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 14px;
-  margin-bottom: 20px;
-}
-.kpi {
-  background: var(--white);
-  border-radius: var(--radius);
-  border: 1px solid var(--parchment);
-  padding: 18px 16px;
-  box-shadow: var(--shadow);
-  text-align: center;
-}
-.kpi-icon {
-  width: 36px; height: 36px;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 10px;
-  font-size: 17px;
-}
-.kpi-icon.gold { background: #FDF4E3; color: var(--gold-dark); }
-.kpi-icon.green { background: var(--green-pale); color: var(--green); }
-.kpi-icon.rose { background: var(--rose-pale); color: var(--rose); }
-.kpi-icon.ink { background: var(--parchment); color: var(--ink-mid); }
-.kpi-val {
-  font-family: var(--serif);
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--ink);
-  line-height: 1;
-  margin-bottom: 4px;
-}
-.kpi-lbl { font-size: 11px; color: var(--ink-lite); }
+/* Self check-in page */
+.selfcheckin-wrap{max-width:420px;margin:0 auto;padding:32px 20px;text-align:center}
+.selfcheckin-title{font-family:var(--serif);font-size:28px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.selfcheckin-sub{font-size:14px;color:var(--ink-lite);margin-bottom:28px}
+.selfcheckin-card{background:var(--white);border-radius:var(--radius);border:1px solid var(--parchment);padding:28px 24px;box-shadow:var(--shadow-lg);text-align:left}
+.big-btn{width:100%;padding:14px;background:var(--gold);color:var(--white);border:none;border-radius:var(--radius-sm);font-size:16px;font-family:var(--serif);font-weight:700;cursor:pointer;transition:all .2s;margin-top:16px}
+.big-btn:hover{background:var(--gold-dark)}
+.checkin-success{text-align:center;padding:20px 0}
+.success-icon{font-size:52px;margin-bottom:12px}
+.success-name{font-family:var(--serif);font-size:24px;font-weight:700;margin-bottom:6px;color:var(--green)}
+.success-msg{font-size:14px;color:var(--ink-lite)}
 
-/* ── Guest list ──────────────────────────────── */
-.search-bar {
-  position: relative;
-  margin-bottom: 10px;
-}
-.search-bar svg {
-  position: absolute;
-  left: 11px; top: 50%;
-  transform: translateY(-50%);
-  width: 15px; height: 15px;
-  color: var(--ink-lite);
-}
-.search-bar input {
-  width: 100%;
-  padding: 9px 12px 9px 34px;
-  border: 1px solid var(--parchment);
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  background: var(--cream);
-  color: var(--ink);
-  font-family: var(--sans);
-  transition: border-color .15s;
-}
-.search-bar input:focus {
-  outline: none;
-  border-color: var(--gold);
-  background: var(--white);
-}
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(42,33,24,.45);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(2px)}
+.modal-bg.open{opacity:1;pointer-events:all}
+.modal{background:var(--white);border-radius:var(--radius);padding:22px;width:380px;max-width:90vw;box-shadow:var(--shadow-lg);border:1px solid var(--parchment)}
+.modal-title{font-family:var(--serif);font-size:16px;font-weight:700;margin-bottom:16px;color:var(--ink)}
 
-.filter-row {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-}
-.pill {
-  padding: 4px 13px;
-  border-radius: 99px;
-  border: 1px solid var(--parchment);
-  font-size: 12px;
-  cursor: pointer;
-  background: none;
-  color: var(--ink-lite);
-  font-family: var(--sans);
-  transition: all .15s;
-}
-.pill:hover { border-color: var(--gold-light); color: var(--ink-mid); }
-.pill.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+/* Activity */
+.activity-row{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--parchment);font-size:13px}
+.activity-row:last-child{border-bottom:none}
+.activity-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0}
+.activity-name{flex:1;font-weight:500}
+.activity-meta{font-size:11px;color:var(--ink-lite)}
 
-.guest-list { display: flex; flex-direction: column; gap: 6px; max-height: 420px; overflow-y: auto; }
-.guest-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 14px;
-  background: var(--white);
-  border: 1px solid var(--parchment);
-  border-radius: var(--radius-sm);
-  transition: all .15s;
-}
-.guest-row:hover { border-color: var(--gold-light); }
-.guest-row.checked {
-  background: var(--green-pale);
-  border-color: #A8D4C5;
-}
-.g-avatar {
-  width: 34px; height: 34px;
-  border-radius: 50%;
-  background: var(--parchment);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--serif);
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--ink-mid);
-  flex-shrink: 0;
-}
-.guest-row.checked .g-avatar { background: #A8D4C5; color: var(--green); }
-.g-info { flex: 1; min-width: 0; }
-.g-name { font-weight: 500; font-size: 14px; }
-.g-meta { font-size: 11px; color: var(--ink-lite); margin-top: 1px; }
-.g-table {
-  font-size: 12px;
-  background: var(--parchment);
-  color: var(--ink-mid);
-  padding: 2px 9px;
-  border-radius: 99px;
-  font-weight: 500;
-}
-.checkin-time {
-  font-size: 11px;
-  color: var(--green);
-  font-weight: 500;
-}
+/* Toast */
+.toast{position:fixed;top:18px;right:18px;background:var(--ink);color:var(--white);padding:10px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;z-index:999;opacity:0;transform:translateY(-6px);transition:all .25s;pointer-events:none;box-shadow:var(--shadow-lg);border-left:3px solid var(--gold);max-width:280px}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{border-left-color:var(--green)}
+.toast.error{border-left-color:var(--rose)}
 
-/* ── Buttons ─────────────────────────────────── */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-family: var(--sans);
-  cursor: pointer;
-  transition: all .15s;
-  border: none;
-  font-weight: 500;
-}
-.btn-gold {
-  background: var(--gold);
-  color: var(--white);
-}
-.btn-gold:hover { background: var(--gold-dark); }
-.btn-outline {
-  background: none;
-  border: 1px solid var(--parchment);
-  color: var(--ink-mid);
-}
-.btn-outline:hover { border-color: var(--gold-light); background: var(--cream); }
-.btn-ghost {
-  background: none;
-  color: var(--ink-lite);
-  padding: 4px 8px;
-  border: none;
-}
-.btn-ghost:hover { color: var(--rose); }
-.btn-green {
-  background: var(--green);
-  color: var(--white);
-}
-.btn-green:hover { background: #3A6A5A; }
-.btn-sm { padding: 5px 12px; font-size: 12px; }
+/* Empty */
+.empty{text-align:center;padding:32px 16px;color:var(--ink-lite);font-size:13px}
+.empty-icon{font-size:26px;margin-bottom:7px}
 
-.checkin-btn {
-  padding: 5px 14px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  border: 1px solid var(--gold-light);
-  background: none;
-  color: var(--gold-dark);
-  cursor: pointer;
-  font-family: var(--sans);
-  font-weight: 500;
-  transition: all .15s;
-}
-.checkin-btn:hover { background: var(--gold); color: var(--white); border-color: var(--gold); }
-
-/* ── Forms ───────────────────────────────────── */
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-.form-group { display: flex; flex-direction: column; gap: 4px; }
-.form-label { font-size: 11px; color: var(--ink-lite); font-weight: 500; letter-spacing: .02em; }
-.form-input {
-  padding: 8px 11px;
-  border: 1px solid var(--parchment);
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  background: var(--cream);
-  color: var(--ink);
-  font-family: var(--sans);
-  transition: border-color .15s;
-}
-.form-input:focus { outline: none; border-color: var(--gold); background: var(--white); }
-.form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
-
-/* ── Gift log ────────────────────────────────── */
-.gift-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border: 1px solid var(--parchment);
-  border-radius: var(--radius-sm);
-  background: var(--white);
-  margin-bottom: 6px;
-}
-.gift-name { flex: 1; font-weight: 500; font-size: 13px; }
-.gift-type {
-  font-size: 11px;
-  padding: 2px 9px;
-  border-radius: 99px;
-  background: var(--parchment);
-  color: var(--ink-mid);
-}
-.gift-amount { font-weight: 700; font-size: 15px; color: var(--green); font-family: var(--serif); }
-.gift-note { font-size: 11px; color: var(--ink-lite); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-/* ── Upload area ─────────────────────────────── */
-.upload-zone {
-  border: 2px dashed var(--gold-light);
-  border-radius: var(--radius);
-  padding: 36px 24px;
-  text-align: center;
-  cursor: pointer;
-  transition: all .2s;
-  background: var(--cream);
-}
-.upload-zone:hover { border-color: var(--gold); background: #FDF7EE; }
-.upload-icon { font-size: 32px; margin-bottom: 10px; }
-.upload-title { font-family: var(--serif); font-size: 15px; color: var(--ink); margin-bottom: 5px; }
-.upload-sub { font-size: 12px; color: var(--ink-lite); line-height: 1.6; }
-
-/* ── Info box ────────────────────────────────── */
-.info-box {
-  background: #FDF7EE;
-  border: 1px solid var(--gold-light);
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-  font-size: 12px;
-  color: var(--ink-mid);
-  line-height: 1.7;
-  margin-bottom: 14px;
-}
-.info-box strong { color: var(--ink); }
-
-/* ── Step cards ──────────────────────────────── */
-.step-card {
-  background: var(--white);
-  border: 1px solid var(--parchment);
-  border-radius: var(--radius);
-  padding: 18px 20px;
-  box-shadow: var(--shadow);
-  margin-bottom: 12px;
-}
-.step-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-.step-num {
-  width: 26px; height: 26px;
-  border-radius: 50%;
-  background: var(--gold);
-  color: var(--white);
-  font-size: 12px;
-  font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-  font-family: var(--serif);
-}
-.step-title { font-weight: 500; font-size: 14px; }
-.step-body { font-size: 12px; color: var(--ink-mid); line-height: 1.8; }
-.code-block {
-  background: var(--ink);
-  color: #A8D4C5;
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-  font-family: 'Courier New', monospace;
-  font-size: 11px;
-  margin-top: 10px;
-  line-height: 1.7;
-  overflow-x: auto;
-}
-
-/* ── Export section ──────────────────────────── */
-.export-card {
-  background: var(--white);
-  border: 1px solid var(--parchment);
-  border-radius: var(--radius);
-  padding: 18px 20px;
-  box-shadow: var(--shadow);
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 10px;
-}
-.export-icon {
-  width: 40px; height: 40px;
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 20px;
-  flex-shrink: 0;
-}
-.export-info { flex: 1; }
-.export-title { font-weight: 500; font-size: 14px; margin-bottom: 3px; }
-.export-sub { font-size: 12px; color: var(--ink-lite); }
-
-/* ── Modal ───────────────────────────────────── */
-.modal-bg {
-  position: fixed; inset: 0;
-  background: rgba(42,33,24,.45);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 200;
-  opacity: 0; pointer-events: none;
-  transition: opacity .2s;
-  backdrop-filter: blur(2px);
-}
-.modal-bg.open { opacity: 1; pointer-events: all; }
-.modal {
-  background: var(--white);
-  border-radius: var(--radius);
-  padding: 24px;
-  width: 380px;
-  max-width: 90vw;
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--parchment);
-}
-.modal-title {
-  font-family: var(--serif);
-  font-size: 17px;
-  font-weight: 700;
-  margin-bottom: 18px;
-  color: var(--ink);
-}
-
-/* ── Toast ───────────────────────────────────── */
-.toast {
-  position: fixed;
-  top: 20px; right: 20px;
-  background: var(--ink);
-  color: var(--white);
-  padding: 11px 18px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 500;
-  z-index: 999;
-  opacity: 0;
-  transform: translateY(-6px);
-  transition: all .25s;
-  pointer-events: none;
-  box-shadow: var(--shadow-lg);
-  border-left: 3px solid var(--gold);
-  max-width: 280px;
-}
-.toast.show { opacity: 1; transform: translateY(0); }
-.toast.success { border-left-color: var(--green); }
-.toast.error { border-left-color: var(--rose); }
-
-/* ── Empty state ─────────────────────────────── */
-.empty {
-  text-align: center;
-  padding: 36px 20px;
-  color: var(--ink-lite);
-  font-size: 13px;
-}
-.empty .empty-icon { font-size: 28px; margin-bottom: 8px; }
-
-/* ── Recent activity ─────────────────────────── */
-.activity-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--parchment);
-  font-size: 13px;
-}
-.activity-row:last-child { border-bottom: none; }
-.activity-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--green);
-  flex-shrink: 0;
-}
-.activity-name { flex: 1; font-weight: 500; }
-.activity-meta { font-size: 11px; color: var(--ink-lite); }
-
-/* ── Responsive ──────────────────────────────── */
-@media (max-width: 768px) {
-  .sidebar { width: 100%; height: auto; position: relative; flex-direction: row; align-items: center; flex-wrap: wrap; }
-  .sidebar-brand { padding: 14px 18px; border-bottom: none; border-right: 1px solid rgba(255,255,255,.08); }
-  .sidebar-stats, .progress-ring-wrap { display: none; }
-  .sidebar-nav { display: flex; padding: 8px; gap: 4px; flex: 1; }
-  .nav-item { padding: 8px 12px; border-left: none; border-bottom: 2px solid transparent; flex-direction: column; font-size: 10px; gap: 3px; }
-  .nav-item.active { border-bottom-color: var(--gold); border-left: none; background: rgba(200,169,110,.08); }
-  .sidebar-footer { display: none; }
-  .main { margin-left: 0; }
-  .layout { flex-direction: column; }
-  .content { padding: 16px; }
-  .topbar { padding: 12px 16px; }
-  .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
-  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+/* Responsive */
+@media(max-width:768px){
+  .sidebar{width:100%;height:auto;position:relative;flex-direction:column}
+  .sidebar-stats,.progress-ring-wrap{display:none}
+  .sidebar-nav{display:flex;padding:6px;gap:2px;overflow-x:auto}
+  .nav-item{padding:8px 10px;border-left:none;border-bottom:2px solid transparent;flex-direction:column;font-size:10px;gap:3px;min-width:60px;justify-content:center;align-items:center}
+  .nav-item.active{border-bottom-color:var(--gold);border-left:none}
+  .sidebar-footer{display:none}
+  .main{margin-left:0}
+  .layout{flex-direction:column}
+  .content{padding:14px}
+  .topbar{padding:11px 14px}
+  .form-grid{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .chart-layout{grid-template-columns:1fr}
+  .qr-guest-grid{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
 <body>
-
 <div class="layout">
 
-  <!-- ── Sidebar ── -->
-  <aside class="sidebar">
-    <div class="sidebar-brand">
-      <div class="brand-sub">Wedding</div>
-      <div class="brand-name">婚禮報到<br>管理系統</div>
-    </div>
-    <div class="sidebar-stats">
-      <div class="sb-stat">
-        <span class="sb-stat-val" id="sb-rate">0%</span>
-        <span class="sb-stat-lbl">報到率</span>
-      </div>
-      <div class="sb-divider"></div>
-      <div class="sb-stat">
-        <span class="sb-stat-val" id="sb-gift">$0</span>
-        <span class="sb-stat-lbl">禮金</span>
-      </div>
-    </div>
-    <div class="progress-ring-wrap">
-      <div class="progress-track">
-        <div class="progress-fill" id="sb-progress" style="width:0%"></div>
-      </div>
-      <div class="progress-label"><strong id="sb-checked">0</strong> / <strong id="sb-total">0</strong> 人已報到</div>
-    </div>
-    <nav class="sidebar-nav">
-      <button class="nav-item active" onclick="showPage('dashboard')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        總覽
-      </button>
-      <button class="nav-item" onclick="showPage('checkin')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        來賓報到
-      </button>
-      <button class="nav-item" onclick="showPage('gift')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
-        禮金登記
-      </button>
-      <button class="nav-item" onclick="showPage('import')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        匯入名單
-      </button>
-      <button class="nav-item" onclick="showPage('export')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        匯出報表
-      </button>
-      <button class="nav-item" onclick="showPage('sheets')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        Sheets 同步
-      </button>
-    </nav>
-    <div class="sidebar-footer">Wedding Checkin System © 2025</div>
-  </aside>
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-sub">Wedding</div>
+    <div class="brand-name">婚禮報到<br>管理系統</div>
+  </div>
+  <div class="sidebar-stats">
+    <div class="sb-stat"><span class="sb-stat-val" id="sb-rate">0%</span><span class="sb-stat-lbl">報到率</span></div>
+    <div class="sb-divider"></div>
+    <div class="sb-stat"><span class="sb-stat-val" id="sb-gift">$0</span><span class="sb-stat-lbl">禮金</span></div>
+  </div>
+  <div class="progress-ring-wrap">
+    <div class="progress-track"><div class="progress-fill" id="sb-progress" style="width:0%"></div></div>
+    <div class="progress-label"><strong id="sb-checked">0</strong> / <strong id="sb-total">0</strong> 人已報到</div>
+  </div>
+  <nav class="sidebar-nav">
+    <button class="nav-item active" onclick="showPage('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>總覽
+    </button>
+    <button class="nav-item" onclick="showPage('checkin')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>來賓報到
+    </button>
+    <button class="nav-item" onclick="showPage('gift')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>禮金登記
+    </button>
+    <button class="nav-item" onclick="showPage('chart')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>報到圖表
+    </button>
+    <button class="nav-item" onclick="showPage('qrpage')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/><rect x="10" y="3" width="2" height="2"/><rect x="10" y="8" width="2" height="2"/><path d="M10 13h6v2"/><path d="M16 13v6"/><rect x="10" y="19" width="2" height="2"/></svg>QR 碼管理
+    </button>
+    <button class="nav-item" onclick="showPage('import')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>匯入名單
+    </button>
+    <button class="nav-item" onclick="showPage('export')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>匯出報表
+    </button>
+    <button class="nav-item" onclick="showPage('sheets')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Sheets 同步
+    </button>
+  </nav>
+  <div class="sidebar-footer">Wedding Checkin © 2025</div>
+</aside>
 
-  <!-- ── Main ── -->
-  <div class="main">
-    <div class="topbar">
-      <h1 id="page-title">總覽</h1>
-      <span class="topbar-sub" id="page-date"></span>
-    </div>
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <h1 id="page-title">總覽</h1>
+    <span class="topbar-sub" id="page-date"></span>
+  </div>
+  <div class="content">
 
-    <div class="content">
-
-      <!-- ── Dashboard ── -->
-      <div id="page-dashboard" class="page active">
-        <div class="kpi-grid">
-          <div class="kpi">
-            <div class="kpi-icon ink">🪑</div>
-            <div class="kpi-val" id="kpi-tables">0</div>
-            <div class="kpi-lbl">邀請桌數</div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-icon gold">👥</div>
-            <div class="kpi-val" id="kpi-total">0</div>
-            <div class="kpi-lbl">邀請人數</div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-icon green">✓</div>
-            <div class="kpi-val" id="kpi-checked" style="color:var(--green)">0</div>
-            <div class="kpi-lbl">已報到</div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-icon rose">💰</div>
-            <div class="kpi-val" id="kpi-gift" style="font-size:20px;color:var(--rose)">$0</div>
-            <div class="kpi-lbl">禮金總額</div>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-          <div class="card">
-            <div class="card-header"><span class="card-title">最新報到</span></div>
-            <div id="recent-list"><div class="empty"><div class="empty-icon">👋</div>尚無報到紀錄</div></div>
-          </div>
-          <div class="card">
-            <div class="card-header"><span class="card-title">最新禮金</span></div>
-            <div id="recent-gifts"><div class="empty"><div class="empty-icon">🎁</div>尚無禮金紀錄</div></div>
-          </div>
-        </div>
+    <!-- Dashboard -->
+    <div id="page-dashboard" class="page active">
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-icon ink">🪑</div><div class="kpi-val" id="kpi-tables">0</div><div class="kpi-lbl">桌數</div></div>
+        <div class="kpi"><div class="kpi-icon gold">👥</div><div class="kpi-val" id="kpi-total">0</div><div class="kpi-lbl">邀請人數</div></div>
+        <div class="kpi"><div class="kpi-icon green">✓</div><div class="kpi-val" id="kpi-checked" style="color:var(--green)">0</div><div class="kpi-lbl">已報到</div></div>
+        <div class="kpi"><div class="kpi-icon rose">💰</div><div class="kpi-val" id="kpi-gift" style="font-size:18px;color:var(--rose)">$0</div><div class="kpi-lbl">禮金總額</div></div>
       </div>
-
-      <!-- ── Check-in ── -->
-      <div id="page-checkin" class="page">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <div class="card">
-          <div class="card-header">
-            <span class="card-title">來賓名單</span>
-            <button class="btn btn-gold btn-sm" onclick="openAddModal()">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              新增來賓
-            </button>
-          </div>
-          <div class="search-bar">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input id="search-input" placeholder="搜尋姓名、桌號、群組…" oninput="renderGuests()">
-          </div>
-          <div class="filter-row">
-            <button class="pill active" id="f-all" onclick="setFilter('all')">全部 <span id="f-all-count"></span></button>
-            <button class="pill" id="f-pending" onclick="setFilter('pending')">未報到 <span id="f-pending-count"></span></button>
-            <button class="pill" id="f-done" onclick="setFilter('done')">已報到 <span id="f-done-count"></span></button>
-          </div>
-          <div class="guest-list" id="guest-list">
-            <div class="empty"><div class="empty-icon">📋</div>尚無來賓資料<br>請點「新增來賓」或前往「匯入名單」</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── Gift ── -->
-      <div id="page-gift" class="page">
-        <div class="card" style="margin-bottom:14px">
-          <div class="card-header"><span class="card-title">登記禮金</span></div>
-          <div class="form-grid" style="margin-bottom:10px">
-            <div class="form-group">
-              <label class="form-label">來賓姓名</label>
-              <input class="form-input" id="gift-name" placeholder="王大明">
-            </div>
-            <div class="form-group">
-              <label class="form-label">金額（NT$）</label>
-              <input class="form-input" id="gift-amount" type="number" placeholder="0" min="0">
-            </div>
-          </div>
-          <div class="form-grid">
-            <div class="form-group">
-              <label class="form-label">收款方式</label>
-              <select class="form-input" id="gift-type">
-                <option>現金</option><option>紅包袋</option><option>轉帳</option><option>禮品</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">備註（選填）</label>
-              <input class="form-input" id="gift-note" placeholder="">
-            </div>
-          </div>
-          <div class="form-actions">
-            <button class="btn btn-gold" onclick="addGift()">登記禮金</button>
-          </div>
+          <div class="card-header"><span class="card-title">最新報到</span></div>
+          <div id="recent-list"><div class="empty"><div class="empty-icon">👋</div>尚無報到紀錄</div></div>
         </div>
         <div class="card">
-          <div class="card-header">
-            <span class="card-title">禮金紀錄（<span id="gift-count">0</span> 筆 · 合計 <span id="gift-total-inline" style="color:var(--green);font-family:var(--serif)">$0</span>）</span>
-          </div>
-          <div id="gift-log"><div class="empty"><div class="empty-icon">💝</div>尚無禮金紀錄</div></div>
+          <div class="card-header"><span class="card-title">最新禮金</span></div>
+          <div id="recent-gifts"><div class="empty"><div class="empty-icon">🎁</div>尚無禮金紀錄</div></div>
         </div>
       </div>
+    </div>
 
-      <!-- ── Import ── -->
-      <div id="page-import" class="page">
-        <div class="info-box">
-          <strong>支援格式：CSV 純文字</strong><br>
-          欄位順序（第一行為標題，自動忽略）：<strong>姓名、群組、桌號、人數</strong><br>
-          範例：<code style="background:var(--parchment);padding:1px 6px;border-radius:4px;font-family:monospace">王大明,新郎方,A3,2</code>
+    <!-- Check-in -->
+    <div id="page-checkin" class="page">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">來賓名單</span>
+          <button class="btn btn-gold btn-sm" onclick="openAddModal()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增來賓
+          </button>
         </div>
-        <div class="upload-zone" onclick="document.getElementById('file-input').click()"
-             ondragover="event.preventDefault()" ondrop="handleDrop(event)">
-          <div class="upload-icon">📤</div>
-          <div class="upload-title">點擊上傳，或拖曳 CSV 檔案至此</div>
-          <div class="upload-sub">系統自動解析並新增到來賓名單<br>不會覆蓋已有資料</div>
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="search-input" placeholder="搜尋姓名、桌號、群組…" oninput="renderGuests()">
         </div>
-        <input type="file" id="file-input" accept=".csv,.txt" style="display:none" onchange="handleFile(this)">
+        <div class="filter-row">
+          <button class="pill active" id="f-all" onclick="setFilter('all')">全部</button>
+          <button class="pill" id="f-pending" onclick="setFilter('pending')">未報到</button>
+          <button class="pill" id="f-done" onclick="setFilter('done')">已報到</button>
+        </div>
+        <div class="guest-list" id="guest-list">
+          <div class="empty"><div class="empty-icon">📋</div>尚無來賓資料</div>
+        </div>
+      </div>
+    </div>
 
-        <div class="card" style="margin-top:14px">
-          <div class="card-header"><span class="card-title">手動新增單筆</span></div>
-          <div class="form-grid" style="margin-bottom:10px">
-            <div class="form-group">
-              <label class="form-label">姓名 *</label>
-              <input class="form-input" id="add-name" placeholder="王大明">
-            </div>
-            <div class="form-group">
-              <label class="form-label">群組</label>
-              <input class="form-input" id="add-group" placeholder="新郎方">
+    <!-- Gift -->
+    <div id="page-gift" class="page">
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header"><span class="card-title">登記禮金</span></div>
+        <div class="form-grid" style="margin-bottom:10px">
+          <div class="form-group">
+            <label class="form-label">來賓姓名</label>
+            <select class="form-input" id="gift-name-select">
+              <option value="">— 選擇來賓 —</option>
+              <option value="__other__">✏️ 手動輸入（臨時來賓）</option>
+            </select>
+          </div>
+          <div class="form-group" id="gift-name-custom-wrap" style="display:none">
+            <label class="form-label">輸入姓名</label>
+            <input class="form-input" id="gift-name-custom" placeholder="臨時來賓姓名">
+          </div>
+          <div class="form-group">
+            <label class="form-label">金額（NT$）</label>
+            <input class="form-input" id="gift-amount" type="number" placeholder="0" min="0">
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">收款方式</label>
+            <select class="form-input" id="gift-type">
+              <option>現金</option><option>紅包袋</option><option>轉帳</option><option>禮品</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">備註（選填）</label>
+            <input class="form-input" id="gift-note" placeholder="">
+          </div>
+        </div>
+        <div class="form-actions"><button class="btn btn-gold" onclick="addGift()">登記禮金</button></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">禮金紀錄（<span id="gift-count">0</span> 筆 · <span id="gift-total-inline" style="color:var(--green);font-family:var(--serif)">$0</span>）</span>
+        </div>
+        <div id="gift-log"><div class="empty"><div class="empty-icon">💝</div>尚無禮金紀錄</div></div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div id="page-chart" class="page">
+      <div class="chart-layout">
+        <div class="card" style="text-align:center">
+          <div class="card-header"><span class="card-title">報到率圓環圖</span></div>
+          <div class="donut-wrap" id="donut-wrap">
+            <svg id="donut-svg" viewBox="0 0 200 200" width="200" height="200">
+              <circle id="donut-bg" cx="100" cy="100" r="70" fill="none" stroke="#F0EBE1" stroke-width="28"/>
+              <circle id="donut-green" cx="100" cy="100" r="70" fill="none" stroke="#4A7C6B" stroke-width="28"
+                stroke-dasharray="0 440" stroke-linecap="round"
+                transform="rotate(-90 100 100)" style="transition:stroke-dasharray .8s cubic-bezier(.4,0,.2,1)"/>
+              <circle id="donut-rose" cx="100" cy="100" r="70" fill="none" stroke="#E8D9BC" stroke-width="28"
+                stroke-dasharray="440 0" stroke-linecap="round"
+                transform="rotate(-90 100 100)" style="transition:stroke-dasharray .8s cubic-bezier(.4,0,.2,1)"/>
+            </svg>
+            <div class="donut-center">
+              <div class="donut-pct" id="donut-pct">0%</div>
+              <div class="donut-lbl">報到率</div>
             </div>
           </div>
-          <div class="form-grid">
-            <div class="form-group">
-              <label class="form-label">桌號</label>
-              <input class="form-input" id="add-table" placeholder="A1">
+          <div style="margin-top:16px;text-align:left;max-width:200px;margin-left:auto;margin-right:auto">
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--green)"></div>
+              <span class="legend-label">已報到</span>
+              <span class="legend-val" id="legend-checked">0</span>
+              <span class="legend-pct" id="legend-checked-pct">人</span>
             </div>
-            <div class="form-group">
-              <label class="form-label">人數</label>
-              <input class="form-input" id="add-seats" type="number" placeholder="2" min="1" value="2">
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--gold-light)"></div>
+              <span class="legend-label">未報到</span>
+              <span class="legend-val" id="legend-pending">0</span>
+              <span class="legend-pct" id="legend-pending-pct">人</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--parchment)"></div>
+              <span class="legend-label">邀請總人數</span>
+              <span class="legend-val" id="legend-total">0</span>
+              <span class="legend-pct">人</span>
             </div>
           </div>
-          <div class="form-actions">
-            <button class="btn btn-gold" onclick="addGuestManual()">新增來賓</button>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">各群組報到率</span></div>
+          <div id="group-bars"><div class="empty"><div class="empty-icon">📊</div>尚無資料</div></div>
+          <div style="margin-top:18px">
+            <div class="card-header"><span class="card-title" style="font-size:13px">各桌報到率</span></div>
+            <div id="table-bars"><div class="empty" style="padding:14px">尚無桌號資料</div></div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- ── Export ── -->
-      <div id="page-export" class="page">
-        <div class="info-box">
-          <strong>匯出為 CSV 格式</strong>，可直接用 Excel、Numbers 或 Google Sheets 開啟。<br>
-          檔案編碼為 UTF-8 with BOM，中文字元完整支援。
-        </div>
-        <div class="export-card">
-          <div class="export-icon" style="background:#E3F0EB">📋</div>
-          <div class="export-info">
-            <div class="export-title">報到紀錄</div>
-            <div class="export-sub">姓名 · 群組 · 桌號 · 人數 · 報到時間 · 報到狀態</div>
-          </div>
-          <button class="btn btn-outline" onclick="exportCheckin()">下載 CSV</button>
-        </div>
-        <div class="export-card">
-          <div class="export-icon" style="background:#FDF4E3">💰</div>
-          <div class="export-info">
-            <div class="export-title">禮金明細</div>
-            <div class="export-sub">姓名 · 金額 · 收款方式 · 備註 · 登記時間</div>
-          </div>
-          <button class="btn btn-outline" onclick="exportGifts()">下載 CSV</button>
-        </div>
-        <div class="export-card">
-          <div class="export-icon" style="background:var(--parchment)">📊</div>
-          <div class="export-info">
-            <div class="export-title">完整報表</div>
-            <div class="export-sub">報到紀錄 ＋ 禮金明細合併，含統計摘要</div>
-          </div>
-          <button class="btn btn-gold" onclick="exportAll()">下載完整報表</button>
-        </div>
+    <!-- QR page -->
+    <div id="page-qrpage" class="page">
+      <div class="info-box">
+        <strong>每位來賓有專屬 QR Code</strong> — 來賓掃碼後進入報到頁，直接看到自己的名字，點一下即完成報到。<br>
+        建議列印在邀請函上，或婚禮當天由工作人員展示。<br>
+        <strong>前提：</strong>需先將網站部署到 GitHub Pages，再將網址填入下方。
       </div>
-
-      <!-- ── Sheets ── -->
-      <div id="page-sheets" class="page">
-        <div class="info-box">
-          <strong>Google Sheets 即時同步</strong> — 讓多台手機或平板同時操作、資料不互蓋。<br>
-          設定約需 10 分鐘，完成後每次報到或登記禮金都自動寫入試算表。
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-header"><span class="card-title">網站網址設定</span></div>
+        <div style="display:flex;gap:8px">
+          <input class="form-input" id="site-url" placeholder="https://你的帳號.github.io/wedding-checkin/" style="flex:1">
+          <button class="btn btn-gold" onclick="saveSiteUrl()">儲存</button>
         </div>
-
-        <div class="step-card">
-          <div class="step-header">
-            <div class="step-num">1</div>
-            <div class="step-title">建立 Google Sheets 試算表</div>
-          </div>
-          <div class="step-body">
-            開啟 <a href="https://sheets.google.com" target="_blank" style="color:var(--gold-dark)">sheets.google.com</a> 新增一份空白試算表，建立兩個分頁：<br>
-            <strong>來賓名單</strong>（欄位：姓名、群組、桌號、人數、報到時間、狀態）<br>
-            <strong>禮金紀錄</strong>（欄位：姓名、金額、方式、備註、時間）
-          </div>
-        </div>
-
-        <div class="step-card">
-          <div class="step-header">
-            <div class="step-num">2</div>
-            <div class="step-title">貼上 Apps Script 程式碼</div>
-          </div>
-          <div class="step-body">
-            在試算表點選「擴充功能 → Apps Script」，刪除原有內容，貼上以下程式碼，再點「部署 → 新增部署 → 網路應用程式」，執行身分選自己，存取權選<strong>所有人</strong>，取得部署網址。
-          </div>
-          <div class="code-block">function doPost(e) {<br>
-&nbsp;&nbsp;const ss = SpreadsheetApp.getActiveSpreadsheet();<br>
-&nbsp;&nbsp;const data = JSON.parse(e.postData.contents);<br>
-&nbsp;&nbsp;const sheet = ss.getSheetByName(data.type);<br>
-&nbsp;&nbsp;if (sheet) sheet.appendRow(data.row);<br>
-&nbsp;&nbsp;return ContentService.createTextOutput('ok');<br>
-}<br>
-function doGet(e) {<br>
-&nbsp;&nbsp;return ContentService.createTextOutput('ok');<br>
-}</div>
-        </div>
-
-        <div class="step-card">
-          <div class="step-header">
-            <div class="step-num">3</div>
-            <div class="step-title">貼上部署網址</div>
-          </div>
-          <div class="step-body" style="margin-bottom:10px">
-            將剛才取得的網址貼在下方，儲存後即完成連線。
-          </div>
-          <div style="display:flex;gap:8px">
-            <input class="form-input" id="sheets-url" placeholder="https://script.google.com/macros/s/…/exec" style="flex:1">
-            <button class="btn btn-gold" onclick="saveSheetUrl()">儲存連線</button>
-          </div>
-          <div id="sheets-status" style="font-size:12px;margin-top:8px;color:var(--green)"></div>
-        </div>
+        <div style="font-size:11px;color:var(--ink-lite);margin-top:6px">儲存後 QR Code 才會自動生成</div>
       </div>
+      <div id="qr-guest-grid" class="qr-guest-grid">
+        <div class="empty" style="grid-column:1/-1"><div class="empty-icon">📷</div>請先輸入網址，且新增來賓後才會顯示 QR Code</div>
+      </div>
+    </div>
 
-    </div><!-- /content -->
-  </div><!-- /main -->
+    <!-- Import -->
+    <div id="page-import" class="page">
+      <div class="info-box">
+        <strong>支援 CSV 格式</strong>（可從 Excel 另存為 CSV）<br>
+        欄位：<strong>姓名、群組、桌號、人數</strong>（第一行標題自動忽略）<br>
+        範例：<code style="background:var(--parchment);padding:1px 6px;border-radius:4px;font-family:monospace">王大明,新郎方,A1,2</code>
+      </div>
+      <div class="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+        <div class="upload-icon">📤</div>
+        <div class="upload-title">點擊上傳，或拖曳 CSV 至此</div>
+        <div class="upload-sub">自動解析新增，不覆蓋已有資料</div>
+      </div>
+      <input type="file" id="file-input" accept=".csv,.txt" style="display:none" onchange="handleFile(this)">
+      <div class="card" style="margin-top:12px">
+        <div class="card-header"><span class="card-title">手動新增來賓</span></div>
+        <div class="form-grid" style="margin-bottom:10px">
+          <div class="form-group">
+            <label class="form-label">姓名 *</label>
+            <input class="form-input" id="add-name" placeholder="王大明">
+          </div>
+          <div class="form-group">
+            <label class="form-label">群組</label>
+            <select class="form-input" id="add-group">
+              <option value="">未分組</option>
+              <option value="新郎方">新郎方</option>
+              <option value="新娘方">新娘方</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">桌號</label>
+            <select class="form-input" id="add-table">
+              <option value="">未指定</option>
+              <option>A1</option><option>A2</option><option>A3</option><option>A4</option><option>A5</option>
+              <option>B1</option><option>B2</option><option>B3</option><option>B4</option><option>B5</option>
+              <option>C1</option><option>C2</option><option>C3</option><option>C4</option><option>C5</option>
+              <option>主桌</option><option>家長桌</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">人數</label>
+            <select class="form-input" id="add-seats">
+              <option value="1">1 人</option><option value="2" selected>2 人</option>
+              <option value="3">3 人</option><option value="4">4 人</option>
+              <option value="5">5 人</option><option value="6">6 人</option>
+              <option value="7">7 人</option><option value="8">8 人</option>
+              <option value="9">9 人</option><option value="10">10 人</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions"><button class="btn btn-gold" onclick="addGuestManual()">新增來賓</button></div>
+      </div>
+    </div>
+
+    <!-- Export -->
+    <div id="page-export" class="page">
+      <div class="info-box"><strong>匯出為 CSV</strong>，可直接用 Excel、Numbers 或 Google Sheets 開啟，編碼 UTF-8（含 BOM）。</div>
+      <div class="export-card">
+        <div class="export-icon" style="background:var(--green-pale)">📋</div>
+        <div class="export-info"><div class="export-title">報到紀錄</div><div class="export-sub">姓名 · 群組 · 桌號 · 人數 · 報到時間 · 狀態</div></div>
+        <button class="btn btn-outline" onclick="exportCheckin()">下載 CSV</button>
+      </div>
+      <div class="export-card">
+        <div class="export-icon" style="background:#FDF4E3">💰</div>
+        <div class="export-info"><div class="export-title">禮金明細</div><div class="export-sub">姓名 · 金額 · 方式 · 備註 · 時間</div></div>
+        <button class="btn btn-outline" onclick="exportGifts()">下載 CSV</button>
+      </div>
+      <div class="export-card">
+        <div class="export-icon" style="background:var(--parchment)">📊</div>
+        <div class="export-info"><div class="export-title">完整報表</div><div class="export-sub">報到紀錄 ＋ 禮金明細 ＋ 統計摘要</div></div>
+        <button class="btn btn-gold" onclick="exportAll()">下載完整報表</button>
+      </div>
+    </div>
+
+    <!-- Sheets -->
+    <div id="page-sheets" class="page">
+      <div class="info-box"><strong>Google Sheets 即時同步</strong> — 多台裝置同時使用，資料自動寫入試算表。設定約需 10 分鐘。</div>
+      <div class="step-card">
+        <div class="step-header"><div class="step-num">1</div><div class="step-title">建立 Google Sheets 試算表</div></div>
+        <div class="step-body">前往 <a href="https://sheets.google.com" target="_blank" style="color:var(--gold-dark)">sheets.google.com</a> 新增空白試算表，建立兩個分頁：<br><strong>來賓名單</strong>（欄：姓名、群組、桌號、人數、報到時間、狀態）<br><strong>禮金紀錄</strong>（欄：姓名、金額、方式、備註、時間）</div>
+      </div>
+      <div class="step-card">
+        <div class="step-header"><div class="step-num">2</div><div class="step-title">建立 Apps Script</div></div>
+        <div class="step-body">在試算表點「擴充功能 → Apps Script」，刪除原有內容，貼上以下程式碼，點「部署 → 新增部署 → 網路應用程式」，執行身分選自己，存取權選<strong>所有人</strong>，取得部署網址。</div>
+        <div class="code-block">function doPost(e) {<br>&nbsp;&nbsp;const ss = SpreadsheetApp.getActiveSpreadsheet();<br>&nbsp;&nbsp;const data = JSON.parse(e.postData.contents);<br>&nbsp;&nbsp;const sheet = ss.getSheetByName(data.type);<br>&nbsp;&nbsp;if (sheet) sheet.appendRow(data.row);<br>&nbsp;&nbsp;return ContentService.createTextOutput('ok');<br>}<br>function doGet(e) { return ContentService.createTextOutput('ok'); }</div>
+      </div>
+      <div class="step-card">
+        <div class="step-header"><div class="step-num">3</div><div class="step-title">貼上部署網址</div></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <input class="form-input" id="sheets-url" placeholder="https://script.google.com/macros/s/…/exec" style="flex:1">
+          <button class="btn btn-gold" onclick="saveSheetUrl()">儲存連線</button>
+        </div>
+        <div id="sheets-status" style="font-size:12px;margin-top:7px;color:var(--green)"></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
 </div><!-- /layout -->
 
-<!-- ── Add Guest Modal ── -->
+<!-- Add Guest Modal -->
 <div class="modal-bg" id="add-modal">
   <div class="modal">
     <div class="modal-title">新增來賓</div>
     <div class="form-grid" style="margin-bottom:10px">
       <div class="form-group"><label class="form-label">姓名 *</label><input class="form-input" id="m-name" placeholder="王大明"></div>
-      <div class="form-group"><label class="form-label">群組</label><input class="form-input" id="m-group" placeholder="新郎方"></div>
+      <div class="form-group"><label class="form-label">群組</label>
+        <select class="form-input" id="m-group">
+          <option value="">未分組</option>
+          <option value="新郎方">新郎方</option>
+          <option value="新娘方">新娘方</option>
+        </select>
+      </div>
     </div>
     <div class="form-grid">
-      <div class="form-group"><label class="form-label">桌號</label><input class="form-input" id="m-table" placeholder="A1"></div>
-      <div class="form-group"><label class="form-label">人數</label><input class="form-input" id="m-seats" type="number" value="2" min="1"></div>
+      <div class="form-group"><label class="form-label">桌號</label>
+        <select class="form-input" id="m-table">
+          <option value="">未指定</option>
+          <option>A1</option><option>A2</option><option>A3</option><option>A4</option><option>A5</option>
+          <option>B1</option><option>B2</option><option>B3</option><option>B4</option><option>B5</option>
+          <option>C1</option><option>C2</option><option>C3</option><option>C4</option><option>C5</option>
+          <option>主桌</option><option>家長桌</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">人數</label>
+        <select class="form-input" id="m-seats">
+          <option value="1">1 人</option><option value="2" selected>2 人</option>
+          <option value="3">3 人</option><option value="4">4 人</option>
+          <option value="5">5 人</option><option value="6">6 人</option>
+          <option value="7">7 人</option><option value="8">8 人</option>
+          <option value="9">9 人</option><option value="10">10 人</option>
+        </select>
+      </div>
     </div>
     <div class="form-actions">
       <button class="btn btn-outline" onclick="closeModal()">取消</button>
@@ -961,25 +580,36 @@ function doGet(e) {<br>
   </div>
 </div>
 
+<!-- Self Check-in Page (shown when ?guest=NAME in URL) -->
+<div id="selfcheckin-overlay" style="display:none;position:fixed;inset:0;background:var(--cream);z-index:500;overflow-y:auto">
+  <div class="selfcheckin-wrap">
+    <div style="font-size:32px;margin-bottom:10px">💍</div>
+    <div class="selfcheckin-title">婚禮報到</div>
+    <div class="selfcheckin-sub">歡迎蒞臨，請確認您的報到資訊</div>
+    <div class="selfcheckin-card" id="selfcheckin-card">
+      <div id="selfcheckin-content"></div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 /* ── State ── */
-let guests = [], checked = {}, gifts = [], giftLog = [];
-let filter = 'all', nextId = 1, sheetsUrl = '';
+let guests=[], checked={}, gifts=[], filter='all', nextId=1, sheetsUrl='', siteUrl='';
 
 /* ── Utils ── */
-const $ = id => document.getElementById(id);
-const today = () => { const d=new Date(); return d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2); };
-const now = () => { const d=new Date(); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); };
+const $=id=>document.getElementById(id);
+const today=()=>{const d=new Date();return d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)};
+const nowStr=()=>{const d=new Date();return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)};
 
-function totalSeats(){ return guests.reduce((a,g)=>a+g.seats,0); }
-function checkedSeats(){ return guests.filter(g=>checked[g.id]).reduce((a,g)=>a+g.seats,0); }
-function uniqueTables(){ return new Set(guests.map(g=>g.table).filter(Boolean)).size; }
-function giftTotal(){ return gifts.reduce((a,g)=>a+(parseFloat(g.amount)||0),0); }
+function totalSeats(){return guests.reduce((a,g)=>a+g.seats,0)}
+function checkedSeats(){return guests.filter(g=>checked[g.id]).reduce((a,g)=>a+g.seats,0)}
+function uniqueTables(){return new Set(guests.map(g=>g.table).filter(Boolean)).size}
+function giftTotal(){return gifts.reduce((a,g)=>a+(parseFloat(g.amount)||0),0)}
 
 function updateStats(){
-  const tot=totalSeats(), chk=checkedSeats(), rate=tot?Math.round(chk/tot*100):0, gt=giftTotal();
+  const tot=totalSeats(),chk=checkedSeats(),rate=tot?Math.round(chk/tot*100):0,gt=giftTotal();
   $('kpi-tables').textContent=uniqueTables();
   $('kpi-total').textContent=tot;
   $('kpi-checked').textContent=chk;
@@ -991,66 +621,123 @@ function updateStats(){
   $('sb-progress').style.width=rate+'%';
   $('gift-count').textContent=gifts.length;
   $('gift-total-inline').textContent='$'+gt.toLocaleString();
-  const pending=guests.length-Object.keys(checked).length, done=Object.keys(checked).length;
-  $('f-all-count').textContent=guests.length?'('+guests.length+')':'';
-  $('f-pending-count').textContent=pending?'('+pending+')':'';
-  $('f-done-count').textContent=done?'('+done+')':'';
   renderRecent();
+  updateChart();
+  updateGiftNameSelect();
 }
 
 function renderRecent(){
-  const rcEl=$('recent-list'), rgEl=$('recent-gifts');
+  const rcEl=$('recent-list'),rgEl=$('recent-gifts');
   const rcArr=guests.filter(g=>checked[g.id]).map(g=>({...g,t:checked[g.id]})).sort((a,b)=>b.t.localeCompare(a.t)).slice(0,5);
-  rcEl.innerHTML = rcArr.length
-    ? rcArr.map(g=>`<div class="activity-row"><div class="activity-dot"></div><span class="activity-name">${g.name}</span><span class="activity-meta">${g.table?'桌'+g.table+' · ':''}${g.t}</span></div>`).join('')
-    : '<div class="empty"><div class="empty-icon">👋</div>尚無報到紀錄</div>';
-  rgEl.innerHTML = gifts.length
-    ? gifts.slice(0,5).map(g=>`<div class="activity-row"><div class="activity-dot" style="background:var(--rose)"></div><span class="activity-name">${g.name}</span><span class="activity-meta" style="color:var(--green);font-weight:500">NT$${(g.amount||0).toLocaleString()}</span></div>`).join('')
-    : '<div class="empty"><div class="empty-icon">🎁</div>尚無禮金紀錄</div>';
+  rcEl.innerHTML=rcArr.length?rcArr.map(g=>`<div class="activity-row"><div class="activity-dot"></div><span class="activity-name">${g.name}</span><span class="activity-meta">${g.table?'桌'+g.table+' · ':''}${g.t}</span></div>`).join(''):'<div class="empty"><div class="empty-icon">👋</div>尚無報到紀錄</div>';
+  rgEl.innerHTML=gifts.length?gifts.slice(0,5).map(g=>`<div class="activity-row"><div class="activity-dot" style="background:var(--rose)"></div><span class="activity-name">${g.name}</span><span class="activity-meta" style="color:var(--green);font-weight:500">NT$${(g.amount||0).toLocaleString()}</span></div>`).join(''):'<div class="empty"><div class="empty-icon">🎁</div>尚無禮金紀錄</div>';
 }
 
-/* ── Guest Render ── */
+/* ── Chart ── */
+function updateChart(){
+  const tot=totalSeats(),chk=checkedSeats(),pend=tot-chk,rate=tot?Math.round(chk/tot*100):0;
+  const circ=2*Math.PI*70, filled=tot?circ*(chk/tot):0;
+  $('donut-green').setAttribute('stroke-dasharray',filled+' '+(circ-filled));
+  $('donut-rose').setAttribute('stroke-dasharray',(circ-filled)+' '+filled);
+  // offset rose to start after green
+  const offsetRose=-(circ/4)+(filled);
+  $('donut-rose').setAttribute('stroke-dashoffset', -(filled));
+  $('donut-rose').setAttribute('transform','rotate(-90 100 100)');
+
+  $('donut-pct').textContent=rate+'%';
+  $('legend-checked').textContent=chk;
+  $('legend-checked-pct').textContent='人 ('+rate+'%)';
+  $('legend-pending').textContent=pend;
+  $('legend-pending-pct').textContent='人 ('+(tot?Math.round(pend/tot*100):0)+'%)';
+  $('legend-total').textContent=tot;
+
+  // group bars
+  const groups={};
+  guests.forEach(g=>{
+    const grp=g.group||'未分組';
+    if(!groups[grp]) groups[grp]={total:0,checked:0};
+    groups[grp].total+=g.seats;
+    if(checked[g.id]) groups[grp].checked+=g.seats;
+  });
+  const gEl=$('group-bars');
+  const gKeys=Object.keys(groups);
+  if(!gKeys.length){gEl.innerHTML='<div class="empty" style="padding:14px">尚無資料</div>';} else {
+    gEl.innerHTML=gKeys.map(k=>{
+      const r=groups[k].total?Math.round(groups[k].checked/groups[k].total*100):0;
+      const col=k==='新郎方'?'#4A7C6B':k==='新娘方'?'#C4726A':'#C8A96E';
+      return `<div class="bar-row">
+        <span class="bar-label">${k}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${r}%;background:${col}"></div></div>
+        <span class="bar-val">${r}%</span>
+      </div>`;
+    }).join('');
+  }
+
+  // table bars
+  const tables={};
+  guests.forEach(g=>{
+    if(!g.table) return;
+    if(!tables[g.table]) tables[g.table]={total:0,checked:0};
+    tables[g.table].total+=g.seats;
+    if(checked[g.id]) tables[g.table].checked+=g.seats;
+  });
+  const tEl=$('table-bars');
+  const tKeys=Object.keys(tables).sort();
+  if(!tKeys.length){tEl.innerHTML='<div class="empty" style="padding:14px">尚無桌號資料</div>'} else {
+    tEl.innerHTML=tKeys.map(k=>{
+      const r=tables[k].total?Math.round(tables[k].checked/tables[k].total*100):0;
+      return `<div class="bar-row">
+        <span class="bar-label">${k}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${r}%;background:var(--gold)"></div></div>
+        <span class="bar-val">${r}%</span>
+      </div>`;
+    }).join('');
+  }
+}
+
+/* ── Guest rendering ── */
 function renderGuests(){
   const q=($('search-input').value||'').toLowerCase().trim();
   const el=$('guest-list');
-  if(!guests.length){ el.innerHTML='<div class="empty"><div class="empty-icon">📋</div>尚無來賓資料<br>請點「新增來賓」或前往「匯入名單」</div>'; return; }
+  if(!guests.length){el.innerHTML='<div class="empty"><div class="empty-icon">📋</div>尚無來賓資料</div>';return}
   const list=guests.filter(g=>{
-    if(q&&![g.name,g.group||'',g.table||''].join(' ').toLowerCase().includes(q)) return false;
-    if(filter==='pending'&&checked[g.id]) return false;
-    if(filter==='done'&&!checked[g.id]) return false;
+    if(q&&![g.name,g.group||'',g.table||''].join(' ').toLowerCase().includes(q))return false;
+    if(filter==='pending'&&checked[g.id])return false;
+    if(filter==='done'&&!checked[g.id])return false;
     return true;
   });
-  if(!list.length){ el.innerHTML='<div class="empty"><div class="empty-icon">🔍</div>找不到符合的來賓</div>'; return; }
+  if(!list.length){el.innerHTML='<div class="empty"><div class="empty-icon">🔍</div>找不到符合的來賓</div>';return}
   el.innerHTML=list.map(g=>`
     <div class="guest-row${checked[g.id]?' checked':''}">
       <div class="g-avatar">${g.name[0]}</div>
       <div class="g-info">
         <div class="g-name">${g.name}</div>
-        <div class="g-meta">${g.group||'未分組'} · ${g.seats}位${g.table?' · 第'+g.table+'桌':''}</div>
+        <div class="g-meta">${g.group||'未分組'} · ${g.seats}人${g.table?' · 第'+g.table+'桌':''}</div>
       </div>
       ${g.table?`<span class="g-table">${g.table}</span>`:''}
       ${checked[g.id]
         ?`<span class="checkin-time">✓ ${checked[g.id]}</span>`
         :`<button class="checkin-btn" onclick="checkIn(${g.id})">報到</button>`}
-      <button class="btn-ghost" onclick="deleteGuest(${g.id})" title="刪除">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      <button class="btn-ghost" onclick="deleteGuest(${g.id})">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
       </button>
     </div>`).join('');
 }
 
-function checkIn(id){
+function checkIn(id, silent){
   const g=guests.find(x=>x.id===id);
-  if(!g||checked[id]) return;
-  const t=now();
+  if(!g||checked[id]) return false;
+  const t=nowStr();
   checked[id]=t;
   pushToSheets('來賓名單',[g.name,g.group||'',g.table||'',g.seats,t,'已報到']);
-  toast(`✓ ${g.name} 報到成功！${g.seats}位`, 'success');
+  if(!silent) toast(`✓ ${g.name} 報到成功！${g.seats}人`,'success');
   updateStats(); renderGuests();
+  return true;
 }
 
 function deleteGuest(id){
   guests=guests.filter(g=>g.id!==id); delete checked[id];
-  toast('已刪除來賓'); updateStats(); renderGuests();
+  toast('已刪除'); updateStats(); renderGuests(); renderQRCodes();
 }
 
 function setFilter(f){
@@ -1059,146 +746,219 @@ function setFilter(f){
   renderGuests();
 }
 
-/* ── Add Guest ── */
+/* ── Add guest ── */
 function addGuest(name,group,table,seats){
-  if(!name.trim()){ toast('請輸入姓名','error'); return false; }
-  guests.push({id:nextId++, name:name.trim(), group:(group||'').trim(), table:(table||'').trim(), seats:parseInt(seats)||1});
-  updateStats(); renderGuests(); return true;
+  if(!name.trim()){toast('請輸入姓名','error');return false}
+  guests.push({id:nextId++,name:name.trim(),group:(group||'').trim(),table:(table||'').trim(),seats:parseInt(seats)||1});
+  updateStats(); renderGuests(); renderQRCodes(); return true;
 }
 function addGuestManual(){
   const ok=addGuest($('add-name').value,$('add-group').value,$('add-table').value,$('add-seats').value);
-  if(ok){ $('add-name').value=''; $('add-group').value=''; $('add-table').value=''; $('add-seats').value='2'; toast('已新增來賓','success'); }
+  if(ok){$('add-name').value='';$('add-group').value='';$('add-table').value='';$('add-seats').value='2';toast('已新增來賓','success')}
 }
-function openAddModal(){ $('add-modal').classList.add('open'); setTimeout(()=>$('m-name').focus(),100); }
-function closeModal(){ $('add-modal').classList.remove('open'); }
+function openAddModal(){$('add-modal').classList.add('open');setTimeout(()=>$('m-name').focus(),100)}
+function closeModal(){$('add-modal').classList.remove('open')}
 function addGuestFromModal(){
   const ok=addGuest($('m-name').value,$('m-group').value,$('m-table').value,$('m-seats').value);
-  if(ok){ $('m-name').value=''; $('m-group').value=''; $('m-table').value=''; $('m-seats').value='2'; closeModal(); toast('已新增來賓','success'); }
+  if(ok){$('m-name').value='';$('m-group').value='';$('m-table').value='';$('m-seats').value='2';closeModal();toast('已新增來賓','success')}
 }
-$('add-modal').addEventListener('click',e=>{ if(e.target===$('add-modal')) closeModal(); });
+$('add-modal').addEventListener('click',e=>{if(e.target===$('add-modal'))closeModal()});
 
 /* ── Gift ── */
+function updateGiftNameSelect(){
+  const sel=$('gift-name-select');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— 選擇來賓 —</option><option value="__other__">✏️ 手動輸入（臨時來賓）</option>';
+  guests.forEach(g=>{
+    const opt=document.createElement('option');
+    opt.value=g.name; opt.textContent=g.name+(g.group?' ('+g.group+')':'');
+    sel.appendChild(opt);
+  });
+  if(cur) sel.value=cur;
+}
+$('gift-name-select').addEventListener('change',function(){
+  const show=this.value==='__other__';
+  $('gift-name-custom-wrap').style.display=show?'':'none';
+});
+
 function addGift(){
-  const name=$('gift-name').value.trim(), amount=parseFloat($('gift-amount').value)||0;
-  const type=$('gift-type').value, note=$('gift-note').value.trim(), t=now();
-  if(!name){ toast('請輸入姓名','error'); return; }
-  if(!amount){ toast('請輸入金額','error'); return; }
+  const selVal=$('gift-name-select').value;
+  const name=selVal==='__other__'?$('gift-name-custom').value.trim():selVal;
+  const amount=parseFloat($('gift-amount').value)||0;
+  const type=$('gift-type').value,note=$('gift-note').value.trim(),t=nowStr();
+  if(!name){toast('請選擇或輸入姓名','error');return}
+  if(!amount){toast('請輸入金額','error');return}
   gifts.unshift({name,amount,type,note,time:t});
-  $('gift-name').value=''; $('gift-amount').value=''; $('gift-note').value='';
+  $('gift-name-select').value=''; $('gift-name-custom').value=''; $('gift-name-custom-wrap').style.display='none';
+  $('gift-amount').value=''; $('gift-note').value='';
   pushToSheets('禮金紀錄',[name,amount,type,note,t]);
-  toast('禮金登記成功！','success');
-  updateStats(); renderGifts();
+  toast('禮金登記成功！','success'); updateStats(); renderGifts();
 }
 function renderGifts(){
   const el=$('gift-log');
-  if(!gifts.length){ el.innerHTML='<div class="empty"><div class="empty-icon">💝</div>尚無禮金紀錄</div>'; return; }
+  if(!gifts.length){el.innerHTML='<div class="empty"><div class="empty-icon">💝</div>尚無禮金紀錄</div>';return}
   el.innerHTML=gifts.map((g,i)=>`
     <div class="gift-row">
       <span class="gift-name">${g.name}</span>
       <span class="gift-type">${g.type}</span>
-      <span class="gift-amount">NT$ ${(g.amount||0).toLocaleString()}</span>
+      <span class="gift-amount">NT$${(g.amount||0).toLocaleString()}</span>
       <span class="gift-note">${g.note||''}</span>
       <span style="font-size:11px;color:var(--ink-lite)">${g.time}</span>
-      <button class="btn-ghost" onclick="deleteGift(${i})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+      <button class="btn-ghost" onclick="deleteGift(${i})">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
     </div>`).join('');
 }
-function deleteGift(i){ gifts.splice(i,1); updateStats(); renderGifts(); toast('已刪除'); }
+function deleteGift(i){gifts.splice(i,1);updateStats();renderGifts();toast('已刪除')}
 
 /* ── Import ── */
-function handleFile(input){
-  const file=input.files[0]; if(!file) return;
-  const r=new FileReader();
-  r.onload=e=>parseCSV(e.target.result);
-  r.readAsText(file,'UTF-8');
-  input.value='';
-}
-function handleDrop(e){
-  e.preventDefault();
-  const file=e.dataTransfer.files[0]; if(!file) return;
-  const r=new FileReader();
-  r.onload=ev=>parseCSV(ev.target.result);
-  r.readAsText(file,'UTF-8');
-}
+function handleFile(input){const file=input.files[0];if(!file)return;const r=new FileReader();r.onload=e=>parseCSV(e.target.result);r.readAsText(file,'UTF-8');input.value=''}
+function handleDrop(e){e.preventDefault();const file=e.dataTransfer.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>parseCSV(ev.target.result);r.readAsText(file,'UTF-8')}
 function parseCSV(text){
   const lines=text.split(/\r?\n/).filter(l=>l.trim());
   let added=0;
   lines.forEach((line,i)=>{
-    if(i===0&&isNaN(parseInt(line.split(',')[3]))) return; // skip header
+    if(i===0&&isNaN(parseInt(line.split(',')[3])))return;
     const cols=line.split(',').map(c=>c.trim().replace(/^"|"$/g,''));
-    if(!cols[0]) return;
+    if(!cols[0])return;
     guests.push({id:nextId++,name:cols[0],group:cols[1]||'',table:cols[2]||'',seats:parseInt(cols[3])||1});
     added++;
   });
-  updateStats(); renderGuests();
-  toast(`成功匯入 ${added} 位來賓`,'success');
+  updateStats();renderGuests();renderQRCodes();toast(`成功匯入 ${added} 位來賓`,'success');
+}
+
+/* ── QR Codes ── */
+function saveSiteUrl(){
+  const u=$('site-url').value.trim();
+  if(!u){toast('請輸入網址','error');return}
+  siteUrl=u.endsWith('/')?u:u+'/';
+  toast('網址已儲存','success');renderQRCodes();
+}
+
+function renderQRCodes(){
+  const el=$('qr-guest-grid');
+  if(!siteUrl){
+    el.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔗</div>請先輸入並儲存網站網址</div>';return;
+  }
+  if(!guests.length){
+    el.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-icon">👥</div>尚無來賓，請先新增或匯入名單</div>';return;
+  }
+  el.innerHTML='';
+  guests.forEach(g=>{
+    const card=document.createElement('div');
+    card.className='qr-card';
+    const url=siteUrl+'?guest='+encodeURIComponent(g.name);
+    card.innerHTML=`
+      <div class="qr-card-name">${g.name}</div>
+      <div class="qr-card-meta">${g.group||'未分組'}${g.table?' · '+g.table:''} · ${g.seats}人</div>
+      <div class="qr-box" id="qr-${g.id}"></div>
+      <div style="font-size:10px;color:var(--ink-lite);margin-top:6px;word-break:break-all">${url}</div>`;
+    el.appendChild(card);
+    try{
+      new QRCode($('qr-'+g.id),{text:url,width:120,height:120,colorDark:'#2A2118',colorLight:'#FFFFFF',correctLevel:QRCode.CorrectLevel.M});
+    }catch(e){}
+  });
+}
+
+/* ── Self check-in via URL ── */
+function checkSelfCheckin(){
+  const params=new URLSearchParams(window.location.search);
+  const guestName=params.get('guest');
+  if(!guestName) return;
+  const overlay=$('selfcheckin-overlay');
+  overlay.style.display='block';
+  const content=$('selfcheckin-content');
+  const g=guests.find(x=>x.name===guestName);
+  if(g&&checked[g.id]){
+    content.innerHTML=`<div class="checkin-success"><div class="success-icon">✅</div><div class="success-name">${g.name}</div><div class="success-msg">您已於 ${checked[g.id]} 完成報到</div></div>`;
+  } else if(g){
+    content.innerHTML=`
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;color:var(--ink-lite);margin-bottom:4px">您好，</div>
+        <div style="font-family:var(--serif);font-size:22px;font-weight:700;color:var(--ink)">${g.name}</div>
+        <div style="font-size:13px;color:var(--ink-lite);margin-top:4px">${g.group||''}${g.table?' · 第'+g.table+'桌':''} · ${g.seats}人</div>
+      </div>
+      <button class="big-btn" onclick="selfCheckIn(${g.id})">✓ 確認報到</button>`;
+  } else {
+    content.innerHTML=`
+      <div style="margin-bottom:14px;font-size:14px;color:var(--ink-mid)">找不到「${guestName}」的資料，<br>請由工作人員協助報到。</div>
+      <button class="big-btn" style="background:var(--ink-mid)" onclick="$('selfcheckin-overlay').style.display='none'">關閉</button>`;
+  }
+}
+
+function selfCheckIn(id){
+  checkIn(id, true);
+  const g=guests.find(x=>x.id===id);
+  const content=$('selfcheckin-content');
+  content.innerHTML=`<div class="checkin-success"><div class="success-icon">🎉</div><div class="success-name">${g?g.name:''}</div><div class="success-msg">報到成功！祝新人百年好合 💍</div></div>`;
 }
 
 /* ── Export ── */
-function csvEscape(v){ return '"'+String(v||'').replace(/"/g,'""')+'"'; }
+function csvEscape(v){return '"'+String(v||'').replace(/"/g,'""')+'"'}
 function downloadCSV(content,filename){
   const blob=new Blob(['\uFEFF'+content],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob); a.download=filename; a.click();
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();
 }
 function exportCheckin(){
-  if(!guests.length){ toast('尚無來賓資料','error'); return; }
-  const h='姓名,群組,桌號,人數,報到時間,報到狀態';
+  if(!guests.length){toast('尚無資料','error');return}
+  const h='姓名,群組,桌號,人數,報到時間,狀態';
   const rows=guests.map(g=>[csvEscape(g.name),csvEscape(g.group),csvEscape(g.table),g.seats,csvEscape(checked[g.id]||''),csvEscape(checked[g.id]?'已報到':'未報到')].join(',')).join('\n');
-  downloadCSV(h+'\n'+rows,'婚禮報到紀錄_'+today()+'.csv');
-  toast('報到紀錄已下載','success');
+  downloadCSV(h+'\n'+rows,'婚禮報到紀錄_'+today()+'.csv');toast('報到紀錄已下載','success');
 }
 function exportGifts(){
-  if(!gifts.length){ toast('尚無禮金資料','error'); return; }
+  if(!gifts.length){toast('尚無資料','error');return}
   const h='姓名,金額,收款方式,備註,登記時間';
   const rows=gifts.map(g=>[csvEscape(g.name),g.amount,csvEscape(g.type),csvEscape(g.note),csvEscape(g.time)].join(',')).join('\n');
-  downloadCSV(h+'\n'+rows,'婚禮禮金明細_'+today()+'.csv');
-  toast('禮金明細已下載','success');
+  downloadCSV(h+'\n'+rows,'婚禮禮金明細_'+today()+'.csv');toast('禮金明細已下載','success');
 }
 function exportAll(){
-  if(!guests.length&&!gifts.length){ toast('尚無資料','error'); return; }
-  let c='=== 報到紀錄 ===\n姓名,群組,桌號,人數,報到時間,報到狀態\n';
+  if(!guests.length&&!gifts.length){toast('尚無資料','error');return}
+  const tot=totalSeats(),chk=checkedSeats();
+  let c='=== 報到紀錄 ===\n姓名,群組,桌號,人數,報到時間,狀態\n';
   c+=guests.map(g=>[csvEscape(g.name),csvEscape(g.group),csvEscape(g.table),g.seats,csvEscape(checked[g.id]||''),csvEscape(checked[g.id]?'已報到':'未報到')].join(',')).join('\n');
-  c+='\n\n=== 禮金明細 ===\n姓名,金額,收款方式,備註,登記時間\n';
+  c+='\n\n=== 禮金明細 ===\n姓名,金額,方式,備註,時間\n';
   c+=gifts.map(g=>[csvEscape(g.name),g.amount,csvEscape(g.type),csvEscape(g.note),csvEscape(g.time)].join(',')).join('\n');
-  c+='\n\n=== 統計 ===\n禮金總額,NT$ '+giftTotal().toLocaleString()+'\n報到人數,'+checkedSeats()+' / '+totalSeats()+'\n報到率,'+(totalSeats()?Math.round(checkedSeats()/totalSeats()*100):0)+'%';
-  downloadCSV(c,'婚禮完整報表_'+today()+'.csv');
-  toast('完整報表已下載','success');
+  c+='\n\n=== 統計 ===\n禮金總額,NT$'+giftTotal().toLocaleString()+'\n已報到,'+chk+' 人\n未報到,'+(tot-chk)+' 人\n報到率,'+(tot?Math.round(chk/tot*100):0)+'%';
+  downloadCSV(c,'婚禮完整報表_'+today()+'.csv');toast('完整報表已下載','success');
 }
 
-/* ── Sheets sync ── */
+/* ── Sheets ── */
 function saveSheetUrl(){
   const u=$('sheets-url').value.trim();
-  if(!u.startsWith('http')){ toast('請輸入正確的網址','error'); return; }
+  if(!u.startsWith('http')){toast('請輸入正確網址','error');return}
   sheetsUrl=u;
-  $('sheets-status').textContent='✓ 連線已設定！之後報到與禮金登記將自動同步至 Google Sheets。';
+  $('sheets-status').textContent='✓ 已儲存！報到與禮金登記將自動同步至 Sheets。';
   toast('Sheets 連線已儲存','success');
 }
 async function pushToSheets(type,row){
-  if(!sheetsUrl) return;
-  try{ await fetch(sheetsUrl,{method:'POST',mode:'no-cors',body:JSON.stringify({type,row}),headers:{'Content-Type':'application/json'}}); }catch(e){}
+  if(!sheetsUrl)return;
+  try{await fetch(sheetsUrl,{method:'POST',mode:'no-cors',body:JSON.stringify({type,row}),headers:{'Content-Type':'application/json'}})}catch(e){}
 }
 
-/* ── Page nav ── */
-const pageTitles={dashboard:'總覽',checkin:'來賓報到',gift:'禮金登記',import:'匯入名單',export:'匯出報表',sheets:'Google Sheets 同步'};
+/* ── Nav ── */
+const pageTitles={dashboard:'總覽',checkin:'來賓報到',gift:'禮金登記',chart:'報到圖表',qrpage:'QR 碼管理',import:'匯入名單',export:'匯出報表',sheets:'Google Sheets 同步'};
 function showPage(p){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
   $('page-'+p).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(x=>{ if(x.getAttribute('onclick').includes("'"+p+"'")) x.classList.add('active'); });
+  document.querySelectorAll('.nav-item').forEach(x=>{if(x.getAttribute('onclick').includes("'"+p+"'"))x.classList.add('active')});
   $('page-title').textContent=pageTitles[p]||p;
+  if(p==='chart') setTimeout(updateChart,50);
 }
 
 /* ── Toast ── */
 function toast(msg,type=''){
-  const t=$('toast'); t.textContent=msg;
+  const t=$('toast');t.textContent=msg;
   t.className='toast show'+(type?' '+type:'');
-  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600);
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);
 }
 
 /* ── Init ── */
 const now_d=new Date();
 $('page-date').textContent=now_d.getFullYear()+'年'+(now_d.getMonth()+1)+'月'+now_d.getDate()+'日';
-updateStats(); renderGuests(); renderGifts();
+updateStats(); renderGuests(); renderGifts(); updateGiftNameSelect();
+// Check if self check-in mode (URL has ?guest=)
+setTimeout(checkSelfCheckin, 300);
 </script>
 </body>
 </html>
