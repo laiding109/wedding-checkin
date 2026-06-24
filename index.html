@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>婚禮報到系統</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ── Design Tokens ───────────────────────────── */
+:root {
+  --cream:   #FAF7F2;
+  --parchment: #F0EBE1;
+  --gold:    #C8A96E;
+  --gold-light: #E8D9BC;
+  --gold-dark:  #9A7A46;
+  --ink:     #2A2118;
+  --ink-mid: #5C4D3C;
+  --ink-lite:#9C8B78;
+  --rose:    #C4726A;
+  --rose-pale:#F5E8E7;
+  --green:   #4A7C6B;
+  --green-pale:#E3F0EB;
+  --white:   #FFFFFF;
+  --shadow:  0 2px 16px rgba(42,33,24,.08);
+  --shadow-lg: 0 8px 32px rgba(42,33,24,.12);
+  --radius:  12px;
+  --radius-sm: 7px;
+  --serif: 'Noto Serif TC', serif;
+  --sans:  'Noto Sans TC', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--sans);
+  background: var(--cream);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ── Layout ─────────────────────────────────── */
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── Sidebar ─────────────────────────────────── */
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--ink);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 50;
+}
+
+.sidebar-brand {
+  padding: 28px 24px 24px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.sidebar-brand .brand-sub {
+  font-family: var(--sans);
+  font-size: 10px;
+  letter-spacing: .15em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.sidebar-brand .brand-name {
+  font-family: var(--serif);
+  font-size: 18px;
+  color: var(--white);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.sidebar-stats {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  display: flex;
+  gap: 0;
+}
+.sb-stat {
+  flex: 1;
+  text-align: center;
+}
+.sb-stat-val {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gold);
+  display: block;
+  line-height: 1;
+}
+.sb-stat-lbl {
+  font-size: 10px;
+  color: rgba(255,255,255,.45);
+  margin-top: 3px;
+  display: block;
+}
+.sb-divider {
+  width: 1px;
+  background: rgba(255,255,255,.08);
+  margin: 4px 8px;
+}
+
+.progress-ring-wrap {
+  padding: 16px 24px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  text-align: center;
+}
+.progress-track {
+  height: 5px;
+  background: rgba(255,255,255,.1);
+  border-radius: 3px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+  border-radius: 3px;
+  transition: width .5s cubic-bezier(.4,0,.2,1);
+}
+.progress-label {
+  font-size: 11px;
+  color: rgba(255,255,255,.45);
+}
+.progress-label strong { color: var(--gold); }
+
+.sidebar-nav {
+  padding: 12px 0;
+  flex: 1;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  color: rgba(255,255,255,.5);
+  cursor: pointer;
+  transition: all .15s;
+  font-size: 13px;
+  border-left: 3px solid transparent;
+  background: none;
+  border-right: none; border-top: none; border-bottom: none;
+  width: 100%;
+  text-align: left;
+}
+.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; opacity: .7; }
+.nav-item:hover { color: rgba(255,255,255,.8); background: rgba(255,255,255,.04); }
+.nav-item.active {
+  color: var(--gold);
+  border-left-color: var(--gold);
+  background: rgba(200,169,110,.08);
+}
+.nav-item.active svg { opacity: 1; }
+
+.sidebar-footer {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  font-size: 11px;
+  color: rgba(255,255,255,.25);
+}
+
+/* ── Main Content ────────────────────────────── */
+.main {
+  margin-left: 220px;
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  background: var(--white);
+  border-bottom: 1px solid var(--parchment);
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+.topbar h1 {
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  flex: 1;
+}
+.topbar-sub {
+  font-size: 12px;
+  color: var(--ink-lite);
+}
+
+.content {
+  padding: 28px 32px;
+  flex: 1;
+}
+
+/* ── Page visibility ─────────────────────────── */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ── Cards ───────────────────────────────────── */
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  border: 1px solid var(--parchment);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.card + .card { margin-top: 14px; }
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.card-title {
+  font-family: var(--serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ── Dashboard grid ──────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.kpi {
+  background: var(--white);
+  border-radius: var(--radius);
+  border: 1px solid var(--parchment);
+  padding: 18px 16px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+.kpi-icon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 10px;
+  font-size: 17px;
+}
+.kpi-icon.gold { background: #FDF4E3; color: var(--gold-dark); }
+.kpi-icon.green { background: var(--green-pale); color: var(--green); }
+.kpi-icon.rose { background: var(--rose-pale); color: var(--rose); }
+.kpi-icon.ink { background: var(--parchment); color: var(--ink-mid); }
+.kpi-val {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.kpi-lbl { font-size: 11px; color: var(--ink-lite); }
+
+/* ── Guest list ──────────────────────────────── */
+.search-bar {
+  position: relative;
+  margin-bottom: 10px;
+}
+.search-bar svg {
+  position: absolute;
+  left: 11px; top: 50%;
+  transform: translateY(-50%);
+  width: 15px; height: 15px;
+  color: var(--ink-lite);
+}
+.search-bar input {
+  width: 100%;
+  padding: 9px 12px 9px 34px;
+  border: 1px solid var(--parchment);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--sans);
+  transition: border-color .15s;
+}
+.search-bar input:focus {
+  outline: none;
+  border-color: var(--gold);
+  background: var(--white);
+}
+
+.filter-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.pill {
+  padding: 4px 13px;
+  border-radius: 99px;
+  border: 1px solid var(--parchment);
+  font-size: 12px;
+  cursor: pointer;
+  background: none;
+  color: var(--ink-lite);
+  font-family: var(--sans);
+  transition: all .15s;
+}
+.pill:hover { border-color: var(--gold-light); color: var(--ink-mid); }
+.pill.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+.guest-list { display: flex; flex-direction: column; gap: 6px; max-height: 420px; overflow-y: auto; }
+.guest-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  background: var(--white);
+  border: 1px solid var(--parchment);
+  border-radius: var(--radius-sm);
+  transition: all .15s;
+}
+.guest-row:hover { border-color: var(--gold-light); }
+.guest-row.checked {
+  background: var(--green-pale);
+  border-color: #A8D4C5;
+}
+.g-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--parchment);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-mid);
+  flex-shrink: 0;
+}
+.guest-row.checked .g-avatar { background: #A8D4C5; color: var(--green); }
+.g-info { flex: 1; min-width: 0; }
+.g-name { font-weight: 500; font-size: 14px; }
+.g-meta { font-size: 11px; color: var(--ink-lite); margin-top: 1px; }
+.g-table {
+  font-size: 12px;
+  background: var(--parchment);
+  color: var(--ink-mid);
+  padding: 2px 9px;
+  border-radius: 99px;
+  font-weight: 500;
+}
+.checkin-time {
+  font-size: 11px;
+  color: var(--green);
+  font-weight: 500;
+}
+
+/* ── Buttons ─────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: all .15s;
+  border: none;
+  font-weight: 500;
+}
+.btn-gold {
+  background: var(--gold);
+  color: var(--white);
+}
+.btn-gold:hover { background: var(--gold-dark); }
+.btn-outline {
+  background: none;
+  border: 1px solid var(--parchment);
+  color: var(--ink-mid);
+}
+.btn-outline:hover { border-color: var(--gold-light); background: var(--cream); }
+.btn-ghost {
+  background: none;
+  color: var(--ink-lite);
+  padding: 4px 8px;
+  border: none;
+}
+.btn-ghost:hover { color: var(--rose); }
+.btn-green {
+  background: var(--green);
+  color: var(--white);
+}
+.btn-green:hover { background: #3A6A5A; }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+
+.checkin-btn {
+  padding: 5px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  border: 1px solid var(--gold-light);
+  background: none;
+  color: var(--gold-dark);
+  cursor: pointer;
+  font-family: var(--sans);
+  font-weight: 500;
+  transition: all .15s;
+}
+.checkin-btn:hover { background: var(--gold); color: var(--white); border-color: var(--gold); }
+
+/* ── Forms ───────────────────────────────────── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-label { font-size: 11px; color: var(--ink-lite); font-weight: 500; letter-spacing: .02em; }
+.form-input {
+  padding: 8px 11px;
+  border: 1px solid var(--parchment);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--sans);
+  transition: border-color .15s;
+}
+.form-input:focus { outline: none; border-color: var(--gold); background: var(--white); }
+.form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+/* ── Gift log ────────────────────────────────── */
+.gift-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--parchment);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  margin-bottom: 6px;
+}
+.gift-name { flex: 1; font-weight: 500; font-size: 13px; }
+.gift-type {
+  font-size: 11px;
+  padding: 2px 9px;
+  border-radius: 99px;
+  background: var(--parchment);
+  color: var(--ink-mid);
+}
+.gift-amount { font-weight: 700; font-size: 15px; color: var(--green); font-family: var(--serif); }
+.gift-note { font-size: 11px; color: var(--ink-lite); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Upload area ─────────────────────────────── */
+.upload-zone {
+  border: 2px dashed var(--gold-light);
+  border-radius: var(--radius);
+  padding: 36px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--cream);
+}
+.upload-zone:hover { border-color: var(--gold); background: #FDF7EE; }
+.upload-icon { font-size: 32px; margin-bottom: 10px; }
+.upload-title { font-family: var(--serif); font-size: 15px; color: var(--ink); margin-bottom: 5px; }
+.upload-sub { font-size: 12px; color: var(--ink-lite); line-height: 1.6; }
+
+/* ── Info box ────────────────────────────────── */
+.info-box {
+  background: #FDF7EE;
+  border: 1px solid var(--gold-light);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--ink-mid);
+  line-height: 1.7;
+  margin-bottom: 14px;
+}
+.info-box strong { color: var(--ink); }
+
+/* ── Step cards ──────────────────────────────── */
+.step-card {
+  background: var(--white);
+  border: 1px solid var(--parchment);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: 12px;
+}
+.step-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.step-num {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--serif);
+}
+.step-title { font-weight: 500; font-size: 14px; }
+.step-body { font-size: 12px; color: var(--ink-mid); line-height: 1.8; }
+.code-block {
+  background: var(--ink);
+  color: #A8D4C5;
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  margin-top: 10px;
+  line-height: 1.7;
+  overflow-x: auto;
+}
+
+/* ── Export section ──────────────────────────── */
+.export-card {
+  background: var(--white);
+  border: 1px solid var(--parchment);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+.export-icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.export-info { flex: 1; }
+.export-title { font-weight: 500; font-size: 14px; margin-bottom: 3px; }
+.export-sub { font-size: 12px; color: var(--ink-lite); }
+
+/* ── Modal ───────────────────────────────────── */
+.modal-bg {
+  position: fixed; inset: 0;
+  background: rgba(42,33,24,.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200;
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s;
+  backdrop-filter: blur(2px);
+}
+.modal-bg.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 24px;
+  width: 380px;
+  max-width: 90vw;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--parchment);
+}
+.modal-title {
+  font-family: var(--serif);
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 18px;
+  color: var(--ink);
+}
+
+/* ── Toast ───────────────────────────────────── */
+.toast {
+  position: fixed;
+  top: 20px; right: 20px;
+  background: var(--ink);
+  color: var(--white);
+  padding: 11px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 999;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: all .25s;
+  pointer-events: none;
+  box-shadow: var(--shadow-lg);
+  border-left: 3px solid var(--gold);
+  max-width: 280px;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { border-left-color: var(--green); }
+.toast.error { border-left-color: var(--rose); }
+
+/* ── Empty state ─────────────────────────────── */
+.empty {
+  text-align: center;
+  padding: 36px 20px;
+  color: var(--ink-lite);
+  font-size: 13px;
+}
+.empty .empty-icon { font-size: 28px; margin-bottom: 8px; }
+
+/* ── Recent activity ─────────────────────────── */
+.activity-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--parchment);
+  font-size: 13px;
+}
+.activity-row:last-child { border-bottom: none; }
+.activity-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+}
+.activity-name { flex: 1; font-weight: 500; }
+.activity-meta { font-size: 11px; color: var(--ink-lite); }
+
+/* ── Responsive ──────────────────────────────── */
+@media (max-width: 768px) {
+  .sidebar { width: 100%; height: auto; position: relative; flex-direction: row; align-items: center; flex-wrap: wrap; }
+  .sidebar-brand { padding: 14px 18px; border-bottom: none; border-right: 1px solid rgba(255,255,255,.08); }
+  .sidebar-stats, .progress-ring-wrap { display: none; }
+  .sidebar-nav { display: flex; padding: 8px; gap: 4px; flex: 1; }
+  .nav-item { padding: 8px 12px; border-left: none; border-bottom: 2px solid transparent; flex-direction: column; font-size: 10px; gap: 3px; }
+  .nav-item.active { border-bottom-color: var(--gold); border-left: none; background: rgba(200,169,110,.08); }
+  .sidebar-footer { display: none; }
+  .main { margin-left: 0; }
+  .layout { flex-direction: column; }
+  .content { padding: 16px; }
+  .topbar { padding: 12px 16px; }
+  .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-sub">Wedding</div>
+      <div class="brand-name">婚禮報到<br>管理系統</div>
+    </div>
+    <div class="sidebar-stats">
+      <div class="sb-stat">
+        <span class="sb-stat-val" id="sb-rate">0%</span>
+        <span class="sb-stat-lbl">報到率</span>
+      </div>
+      <div class="sb-divider"></div>
+      <div class="sb-stat">
+        <span class="sb-stat-val" id="sb-gift">$0</span>
+        <span class="sb-stat-lbl">禮金</span>
+      </div>
+    </div>
+    <div class="progress-ring-wrap">
+      <div class="progress-track">
+        <div class="progress-fill" id="sb-progress" style="width:0%"></div>
+      </div>
+      <div class="progress-label"><strong id="sb-checked">0</strong> / <strong id="sb-total">0</strong> 人已報到</div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="showPage('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        總覽
+      </button>
+      <button class="nav-item" onclick="showPage('checkin')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        來賓報到
+      </button>
+      <button class="nav-item" onclick="showPage('gift')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+        禮金登記
+      </button>
+      <button class="nav-item" onclick="showPage('import')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        匯入名單
+      </button>
+      <button class="nav-item" onclick="showPage('export')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        匯出報表
+      </button>
+      <button class="nav-item" onclick="showPage('sheets')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Sheets 同步
+      </button>
+    </nav>
+    <div class="sidebar-footer">Wedding Checkin System © 2025</div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="main">
+    <div class="topbar">
+      <h1 id="page-title">總覽</h1>
+      <span class="topbar-sub" id="page-date"></span>
+    </div>
+
+    <div class="content">
+
+      <!-- ── Dashboard ── -->
+      <div id="page-dashboard" class="page active">
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="kpi-icon ink">🪑</div>
+            <div class="kpi-val" id="kpi-tables">0</div>
+            <div class="kpi-lbl">邀請桌數</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-icon gold">👥</div>
+            <div class="kpi-val" id="kpi-total">0</div>
+            <div class="kpi-lbl">邀請人數</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-icon green">✓</div>
+            <div class="kpi-val" id="kpi-checked" style="color:var(--green)">0</div>
+            <div class="kpi-lbl">已報到</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-icon rose">💰</div>
+            <div class="kpi-val" id="kpi-gift" style="font-size:20px;color:var(--rose)">$0</div>
+            <div class="kpi-lbl">禮金總額</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="card">
+            <div class="card-header"><span class="card-title">最新報到</span></div>
+            <div id="recent-list"><div class="empty"><div class="empty-icon">👋</div>尚無報到紀錄</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">最新禮金</span></div>
+            <div id="recent-gifts"><div class="empty"><div class="empty-icon">🎁</div>尚無禮金紀錄</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Check-in ── -->
+      <div id="page-checkin" class="page">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">來賓名單</span>
+            <button class="btn btn-gold btn-sm" onclick="openAddModal()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              新增來賓
+            </button>
+          </div>
+          <div class="search-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="search-input" placeholder="搜尋姓名、桌號、群組…" oninput="renderGuests()">
+          </div>
+          <div class="filter-row">
+            <button class="pill active" id="f-all" onclick="setFilter('all')">全部 <span id="f-all-count"></span></button>
+            <button class="pill" id="f-pending" onclick="setFilter('pending')">未報到 <span id="f-pending-count"></span></button>
+            <button class="pill" id="f-done" onclick="setFilter('done')">已報到 <span id="f-done-count"></span></button>
+          </div>
+          <div class="guest-list" id="guest-list">
+            <div class="empty"><div class="empty-icon">📋</div>尚無來賓資料<br>請點「新增來賓」或前往「匯入名單」</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Gift ── -->
+      <div id="page-gift" class="page">
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-header"><span class="card-title">登記禮金</span></div>
+          <div class="form-grid" style="margin-bottom:10px">
+            <div class="form-group">
+              <label class="form-label">來賓姓名</label>
+              <input class="form-input" id="gift-name" placeholder="王大明">
+            </div>
+            <div class="form-group">
+              <label class="form-label">金額（NT$）</label>
+              <input class="form-input" id="gift-amount" type="number" placeholder="0" min="0">
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">收款方式</label>
+              <select class="form-input" id="gift-type">
+                <option>現金</option><option>紅包袋</option><option>轉帳</option><option>禮品</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">備註（選填）</label>
+              <input class="form-input" id="gift-note" placeholder="">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-gold" onclick="addGift()">登記禮金</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">禮金紀錄（<span id="gift-count">0</span> 筆 · 合計 <span id="gift-total-inline" style="color:var(--green);font-family:var(--serif)">$0</span>）</span>
+          </div>
+          <div id="gift-log"><div class="empty"><div class="empty-icon">💝</div>尚無禮金紀錄</div></div>
+        </div>
+      </div>
+
+      <!-- ── Import ── -->
+      <div id="page-import" class="page">
+        <div class="info-box">
+          <strong>支援格式：CSV 純文字</strong><br>
+          欄位順序（第一行為標題，自動忽略）：<strong>姓名、群組、桌號、人數</strong><br>
+          範例：<code style="background:var(--parchment);padding:1px 6px;border-radius:4px;font-family:monospace">王大明,新郎方,A3,2</code>
+        </div>
+        <div class="upload-zone" onclick="document.getElementById('file-input').click()"
+             ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+          <div class="upload-icon">📤</div>
+          <div class="upload-title">點擊上傳，或拖曳 CSV 檔案至此</div>
+          <div class="upload-sub">系統自動解析並新增到來賓名單<br>不會覆蓋已有資料</div>
+        </div>
+        <input type="file" id="file-input" accept=".csv,.txt" style="display:none" onchange="handleFile(this)">
+
+        <div class="card" style="margin-top:14px">
+          <div class="card-header"><span class="card-title">手動新增單筆</span></div>
+          <div class="form-grid" style="margin-bottom:10px">
+            <div class="form-group">
+              <label class="form-label">姓名 *</label>
+              <input class="form-input" id="add-name" placeholder="王大明">
+            </div>
+            <div class="form-group">
+              <label class="form-label">群組</label>
+              <input class="form-input" id="add-group" placeholder="新郎方">
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">桌號</label>
+              <input class="form-input" id="add-table" placeholder="A1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">人數</label>
+              <input class="form-input" id="add-seats" type="number" placeholder="2" min="1" value="2">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-gold" onclick="addGuestManual()">新增來賓</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Export ── -->
+      <div id="page-export" class="page">
+        <div class="info-box">
+          <strong>匯出為 CSV 格式</strong>，可直接用 Excel、Numbers 或 Google Sheets 開啟。<br>
+          檔案編碼為 UTF-8 with BOM，中文字元完整支援。
+        </div>
+        <div class="export-card">
+          <div class="export-icon" style="background:#E3F0EB">📋</div>
+          <div class="export-info">
+            <div class="export-title">報到紀錄</div>
+            <div class="export-sub">姓名 · 群組 · 桌號 · 人數 · 報到時間 · 報到狀態</div>
+          </div>
+          <button class="btn btn-outline" onclick="exportCheckin()">下載 CSV</button>
+        </div>
+        <div class="export-card">
+          <div class="export-icon" style="background:#FDF4E3">💰</div>
+          <div class="export-info">
+            <div class="export-title">禮金明細</div>
+            <div class="export-sub">姓名 · 金額 · 收款方式 · 備註 · 登記時間</div>
+          </div>
+          <button class="btn btn-outline" onclick="exportGifts()">下載 CSV</button>
+        </div>
+        <div class="export-card">
+          <div class="export-icon" style="background:var(--parchment)">📊</div>
+          <div class="export-info">
+            <div class="export-title">完整報表</div>
+            <div class="export-sub">報到紀錄 ＋ 禮金明細合併，含統計摘要</div>
+          </div>
+          <button class="btn btn-gold" onclick="exportAll()">下載完整報表</button>
+        </div>
+      </div>
+
+      <!-- ── Sheets ── -->
+      <div id="page-sheets" class="page">
+        <div class="info-box">
+          <strong>Google Sheets 即時同步</strong> — 讓多台手機或平板同時操作、資料不互蓋。<br>
+          設定約需 10 分鐘，完成後每次報到或登記禮金都自動寫入試算表。
+        </div>
+
+        <div class="step-card">
+          <div class="step-header">
+            <div class="step-num">1</div>
+            <div class="step-title">建立 Google Sheets 試算表</div>
+          </div>
+          <div class="step-body">
+            開啟 <a href="https://sheets.google.com" target="_blank" style="color:var(--gold-dark)">sheets.google.com</a> 新增一份空白試算表，建立兩個分頁：<br>
+            <strong>來賓名單</strong>（欄位：姓名、群組、桌號、人數、報到時間、狀態）<br>
+            <strong>禮金紀錄</strong>（欄位：姓名、金額、方式、備註、時間）
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-header">
+            <div class="step-num">2</div>
+            <div class="step-title">貼上 Apps Script 程式碼</div>
+          </div>
+          <div class="step-body">
+            在試算表點選「擴充功能 → Apps Script」，刪除原有內容，貼上以下程式碼，再點「部署 → 新增部署 → 網路應用程式」，執行身分選自己，存取權選<strong>所有人</strong>，取得部署網址。
+          </div>
+          <div class="code-block">function doPost(e) {<br>
+&nbsp;&nbsp;const ss = SpreadsheetApp.getActiveSpreadsheet();<br>
+&nbsp;&nbsp;const data = JSON.parse(e.postData.contents);<br>
+&nbsp;&nbsp;const sheet = ss.getSheetByName(data.type);<br>
+&nbsp;&nbsp;if (sheet) sheet.appendRow(data.row);<br>
+&nbsp;&nbsp;return ContentService.createTextOutput('ok');<br>
+}<br>
+function doGet(e) {<br>
+&nbsp;&nbsp;return ContentService.createTextOutput('ok');<br>
+}</div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-header">
+            <div class="step-num">3</div>
+            <div class="step-title">貼上部署網址</div>
+          </div>
+          <div class="step-body" style="margin-bottom:10px">
+            將剛才取得的網址貼在下方，儲存後即完成連線。
+          </div>
+          <div style="display:flex;gap:8px">
+            <input class="form-input" id="sheets-url" placeholder="https://script.google.com/macros/s/…/exec" style="flex:1">
+            <button class="btn btn-gold" onclick="saveSheetUrl()">儲存連線</button>
+          </div>
+          <div id="sheets-status" style="font-size:12px;margin-top:8px;color:var(--green)"></div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- ── Add Guest Modal ── -->
+<div class="modal-bg" id="add-modal">
+  <div class="modal">
+    <div class="modal-title">新增來賓</div>
+    <div class="form-grid" style="margin-bottom:10px">
+      <div class="form-group"><label class="form-label">姓名 *</label><input class="form-input" id="m-name" placeholder="王大明"></div>
+      <div class="form-group"><label class="form-label">群組</label><input class="form-input" id="m-group" placeholder="新郎方"></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">桌號</label><input class="form-input" id="m-table" placeholder="A1"></div>
+      <div class="form-group"><label class="form-label">人數</label><input class="form-input" id="m-seats" type="number" value="2" min="1"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal()">取消</button>
+      <button class="btn btn-gold" onclick="addGuestFromModal()">新增</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── State ── */
+let guests = [], checked = {}, gifts = [], giftLog = [];
+let filter = 'all', nextId = 1, sheetsUrl = '';
+
+/* ── Utils ── */
+const $ = id => document.getElementById(id);
+const today = () => { const d=new Date(); return d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2); };
+const now = () => { const d=new Date(); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); };
+
+function totalSeats(){ return guests.reduce((a,g)=>a+g.seats,0); }
+function checkedSeats(){ return guests.filter(g=>checked[g.id]).reduce((a,g)=>a+g.seats,0); }
+function uniqueTables(){ return new Set(guests.map(g=>g.table).filter(Boolean)).size; }
+function giftTotal(){ return gifts.reduce((a,g)=>a+(parseFloat(g.amount)||0),0); }
+
+function updateStats(){
+  const tot=totalSeats(), chk=checkedSeats(), rate=tot?Math.round(chk/tot*100):0, gt=giftTotal();
+  $('kpi-tables').textContent=uniqueTables();
+  $('kpi-total').textContent=tot;
+  $('kpi-checked').textContent=chk;
+  $('kpi-gift').textContent='$'+gt.toLocaleString();
+  $('sb-rate').textContent=rate+'%';
+  $('sb-gift').textContent='$'+(gt>=10000?Math.round(gt/1000)+'k':gt.toLocaleString());
+  $('sb-checked').textContent=chk;
+  $('sb-total').textContent=tot;
+  $('sb-progress').style.width=rate+'%';
+  $('gift-count').textContent=gifts.length;
+  $('gift-total-inline').textContent='$'+gt.toLocaleString();
+  const pending=guests.length-Object.keys(checked).length, done=Object.keys(checked).length;
+  $('f-all-count').textContent=guests.length?'('+guests.length+')':'';
+  $('f-pending-count').textContent=pending?'('+pending+')':'';
+  $('f-done-count').textContent=done?'('+done+')':'';
+  renderRecent();
+}
+
+function renderRecent(){
+  const rcEl=$('recent-list'), rgEl=$('recent-gifts');
+  const rcArr=guests.filter(g=>checked[g.id]).map(g=>({...g,t:checked[g.id]})).sort((a,b)=>b.t.localeCompare(a.t)).slice(0,5);
+  rcEl.innerHTML = rcArr.length
+    ? rcArr.map(g=>`<div class="activity-row"><div class="activity-dot"></div><span class="activity-name">${g.name}</span><span class="activity-meta">${g.table?'桌'+g.table+' · ':''}${g.t}</span></div>`).join('')
+    : '<div class="empty"><div class="empty-icon">👋</div>尚無報到紀錄</div>';
+  rgEl.innerHTML = gifts.length
+    ? gifts.slice(0,5).map(g=>`<div class="activity-row"><div class="activity-dot" style="background:var(--rose)"></div><span class="activity-name">${g.name}</span><span class="activity-meta" style="color:var(--green);font-weight:500">NT$${(g.amount||0).toLocaleString()}</span></div>`).join('')
+    : '<div class="empty"><div class="empty-icon">🎁</div>尚無禮金紀錄</div>';
+}
+
+/* ── Guest Render ── */
+function renderGuests(){
+  const q=($('search-input').value||'').toLowerCase().trim();
+  const el=$('guest-list');
+  if(!guests.length){ el.innerHTML='<div class="empty"><div class="empty-icon">📋</div>尚無來賓資料<br>請點「新增來賓」或前往「匯入名單」</div>'; return; }
+  const list=guests.filter(g=>{
+    if(q&&![g.name,g.group||'',g.table||''].join(' ').toLowerCase().includes(q)) return false;
+    if(filter==='pending'&&checked[g.id]) return false;
+    if(filter==='done'&&!checked[g.id]) return false;
+    return true;
+  });
+  if(!list.length){ el.innerHTML='<div class="empty"><div class="empty-icon">🔍</div>找不到符合的來賓</div>'; return; }
+  el.innerHTML=list.map(g=>`
+    <div class="guest-row${checked[g.id]?' checked':''}">
+      <div class="g-avatar">${g.name[0]}</div>
+      <div class="g-info">
+        <div class="g-name">${g.name}</div>
+        <div class="g-meta">${g.group||'未分組'} · ${g.seats}位${g.table?' · 第'+g.table+'桌':''}</div>
+      </div>
+      ${g.table?`<span class="g-table">${g.table}</span>`:''}
+      ${checked[g.id]
+        ?`<span class="checkin-time">✓ ${checked[g.id]}</span>`
+        :`<button class="checkin-btn" onclick="checkIn(${g.id})">報到</button>`}
+      <button class="btn-ghost" onclick="deleteGuest(${g.id})" title="刪除">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+function checkIn(id){
+  const g=guests.find(x=>x.id===id);
+  if(!g||checked[id]) return;
+  const t=now();
+  checked[id]=t;
+  pushToSheets('來賓名單',[g.name,g.group||'',g.table||'',g.seats,t,'已報到']);
+  toast(`✓ ${g.name} 報到成功！${g.seats}位`, 'success');
+  updateStats(); renderGuests();
+}
+
+function deleteGuest(id){
+  guests=guests.filter(g=>g.id!==id); delete checked[id];
+  toast('已刪除來賓'); updateStats(); renderGuests();
+}
+
+function setFilter(f){
+  filter=f;
+  ['all','pending','done'].forEach(x=>$('f-'+x).classList.toggle('active',x===f));
+  renderGuests();
+}
+
+/* ── Add Guest ── */
+function addGuest(name,group,table,seats){
+  if(!name.trim()){ toast('請輸入姓名','error'); return false; }
+  guests.push({id:nextId++, name:name.trim(), group:(group||'').trim(), table:(table||'').trim(), seats:parseInt(seats)||1});
+  updateStats(); renderGuests(); return true;
+}
+function addGuestManual(){
+  const ok=addGuest($('add-name').value,$('add-group').value,$('add-table').value,$('add-seats').value);
+  if(ok){ $('add-name').value=''; $('add-group').value=''; $('add-table').value=''; $('add-seats').value='2'; toast('已新增來賓','success'); }
+}
+function openAddModal(){ $('add-modal').classList.add('open'); setTimeout(()=>$('m-name').focus(),100); }
+function closeModal(){ $('add-modal').classList.remove('open'); }
+function addGuestFromModal(){
+  const ok=addGuest($('m-name').value,$('m-group').value,$('m-table').value,$('m-seats').value);
+  if(ok){ $('m-name').value=''; $('m-group').value=''; $('m-table').value=''; $('m-seats').value='2'; closeModal(); toast('已新增來賓','success'); }
+}
+$('add-modal').addEventListener('click',e=>{ if(e.target===$('add-modal')) closeModal(); });
+
+/* ── Gift ── */
+function addGift(){
+  const name=$('gift-name').value.trim(), amount=parseFloat($('gift-amount').value)||0;
+  const type=$('gift-type').value, note=$('gift-note').value.trim(), t=now();
+  if(!name){ toast('請輸入姓名','error'); return; }
+  if(!amount){ toast('請輸入金額','error'); return; }
+  gifts.unshift({name,amount,type,note,time:t});
+  $('gift-name').value=''; $('gift-amount').value=''; $('gift-note').value='';
+  pushToSheets('禮金紀錄',[name,amount,type,note,t]);
+  toast('禮金登記成功！','success');
+  updateStats(); renderGifts();
+}
+function renderGifts(){
+  const el=$('gift-log');
+  if(!gifts.length){ el.innerHTML='<div class="empty"><div class="empty-icon">💝</div>尚無禮金紀錄</div>'; return; }
+  el.innerHTML=gifts.map((g,i)=>`
+    <div class="gift-row">
+      <span class="gift-name">${g.name}</span>
+      <span class="gift-type">${g.type}</span>
+      <span class="gift-amount">NT$ ${(g.amount||0).toLocaleString()}</span>
+      <span class="gift-note">${g.note||''}</span>
+      <span style="font-size:11px;color:var(--ink-lite)">${g.time}</span>
+      <button class="btn-ghost" onclick="deleteGift(${i})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+    </div>`).join('');
+}
+function deleteGift(i){ gifts.splice(i,1); updateStats(); renderGifts(); toast('已刪除'); }
+
+/* ── Import ── */
+function handleFile(input){
+  const file=input.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=e=>parseCSV(e.target.result);
+  r.readAsText(file,'UTF-8');
+  input.value='';
+}
+function handleDrop(e){
+  e.preventDefault();
+  const file=e.dataTransfer.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=ev=>parseCSV(ev.target.result);
+  r.readAsText(file,'UTF-8');
+}
+function parseCSV(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.trim());
+  let added=0;
+  lines.forEach((line,i)=>{
+    if(i===0&&isNaN(parseInt(line.split(',')[3]))) return; // skip header
+    const cols=line.split(',').map(c=>c.trim().replace(/^"|"$/g,''));
+    if(!cols[0]) return;
+    guests.push({id:nextId++,name:cols[0],group:cols[1]||'',table:cols[2]||'',seats:parseInt(cols[3])||1});
+    added++;
+  });
+  updateStats(); renderGuests();
+  toast(`成功匯入 ${added} 位來賓`,'success');
+}
+
+/* ── Export ── */
+function csvEscape(v){ return '"'+String(v||'').replace(/"/g,'""')+'"'; }
+function downloadCSV(content,filename){
+  const blob=new Blob(['\uFEFF'+content],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=filename; a.click();
+}
+function exportCheckin(){
+  if(!guests.length){ toast('尚無來賓資料','error'); return; }
+  const h='姓名,群組,桌號,人數,報到時間,報到狀態';
+  const rows=guests.map(g=>[csvEscape(g.name),csvEscape(g.group),csvEscape(g.table),g.seats,csvEscape(checked[g.id]||''),csvEscape(checked[g.id]?'已報到':'未報到')].join(',')).join('\n');
+  downloadCSV(h+'\n'+rows,'婚禮報到紀錄_'+today()+'.csv');
+  toast('報到紀錄已下載','success');
+}
+function exportGifts(){
+  if(!gifts.length){ toast('尚無禮金資料','error'); return; }
+  const h='姓名,金額,收款方式,備註,登記時間';
+  const rows=gifts.map(g=>[csvEscape(g.name),g.amount,csvEscape(g.type),csvEscape(g.note),csvEscape(g.time)].join(',')).join('\n');
+  downloadCSV(h+'\n'+rows,'婚禮禮金明細_'+today()+'.csv');
+  toast('禮金明細已下載','success');
+}
+function exportAll(){
+  if(!guests.length&&!gifts.length){ toast('尚無資料','error'); return; }
+  let c='=== 報到紀錄 ===\n姓名,群組,桌號,人數,報到時間,報到狀態\n';
+  c+=guests.map(g=>[csvEscape(g.name),csvEscape(g.group),csvEscape(g.table),g.seats,csvEscape(checked[g.id]||''),csvEscape(checked[g.id]?'已報到':'未報到')].join(',')).join('\n');
+  c+='\n\n=== 禮金明細 ===\n姓名,金額,收款方式,備註,登記時間\n';
+  c+=gifts.map(g=>[csvEscape(g.name),g.amount,csvEscape(g.type),csvEscape(g.note),csvEscape(g.time)].join(',')).join('\n');
+  c+='\n\n=== 統計 ===\n禮金總額,NT$ '+giftTotal().toLocaleString()+'\n報到人數,'+checkedSeats()+' / '+totalSeats()+'\n報到率,'+(totalSeats()?Math.round(checkedSeats()/totalSeats()*100):0)+'%';
+  downloadCSV(c,'婚禮完整報表_'+today()+'.csv');
+  toast('完整報表已下載','success');
+}
+
+/* ── Sheets sync ── */
+function saveSheetUrl(){
+  const u=$('sheets-url').value.trim();
+  if(!u.startsWith('http')){ toast('請輸入正確的網址','error'); return; }
+  sheetsUrl=u;
+  $('sheets-status').textContent='✓ 連線已設定！之後報到與禮金登記將自動同步至 Google Sheets。';
+  toast('Sheets 連線已儲存','success');
+}
+async function pushToSheets(type,row){
+  if(!sheetsUrl) return;
+  try{ await fetch(sheetsUrl,{method:'POST',mode:'no-cors',body:JSON.stringify({type,row}),headers:{'Content-Type':'application/json'}}); }catch(e){}
+}
+
+/* ── Page nav ── */
+const pageTitles={dashboard:'總覽',checkin:'來賓報到',gift:'禮金登記',import:'匯入名單',export:'匯出報表',sheets:'Google Sheets 同步'};
+function showPage(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  $('page-'+p).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(x=>{ if(x.getAttribute('onclick').includes("'"+p+"'")) x.classList.add('active'); });
+  $('page-title').textContent=pageTitles[p]||p;
+}
+
+/* ── Toast ── */
+function toast(msg,type=''){
+  const t=$('toast'); t.textContent=msg;
+  t.className='toast show'+(type?' '+type:'');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+/* ── Init ── */
+const now_d=new Date();
+$('page-date').textContent=now_d.getFullYear()+'年'+(now_d.getMonth()+1)+'月'+now_d.getDate()+'日';
+updateStats(); renderGuests(); renderGifts();
+</script>
+</body>
+</html>
